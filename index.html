@@ -524,6 +524,41 @@
       .scene-bg.thomas{background:linear-gradient(180deg,#0d1f16,#08130c 60%,#040805)}
       .scene-bg.thomas::before{content:"🌿  🌙  📱";position:absolute;top:12%;right:8%;font-size:1.8rem;opacity:.4;letter-spacing:.8rem}
       @media (prefers-reduced-motion:reduce){.hotspot,.phone-card{animation:none}}
+
+      /* ---------- AAA Stage 1: swipe pages, cinematic polish ---------- */
+      .aaa-pager{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:65;display:none;align-items:center;gap:10px;background:rgba(12,10,7,.93);border:1px solid var(--brass-dim);border-radius:99px;padding:6px 10px;box-shadow:0 6px 24px rgba(0,0,0,.55)}
+      .aaa-pager.on{display:flex}
+      .aaa-pager .aaa-arrow,.aaa-pager .aaa-mute{background:#211b10;border:1px solid var(--brass-dim);color:var(--paper);border-radius:50%;width:34px;height:34px;font-size:1.15rem;line-height:1;cursor:pointer;flex:none}
+      .aaa-pager .aaa-arrow:disabled{opacity:.35;cursor:default}
+      .aaa-pager .aaa-dots{display:flex;gap:7px;align-items:center}
+      .aaa-dot{width:8px;height:8px;border-radius:50%;background:#5b4f3a;border:0;padding:0;cursor:pointer}
+      .aaa-dot.on{background:var(--brass);transform:scale(1.35)}
+      @keyframes aaaSlideInR{from{opacity:0;transform:translateX(46px)}to{opacity:1;transform:none}}
+      @keyframes aaaSlideInL{from{opacity:0;transform:translateX(-46px)}to{opacity:1;transform:none}}
+      @keyframes aaaFadeIn{from{opacity:0}to{opacity:1}}
+      .aaa-in-r{animation:aaaSlideInR .38s ease both}
+      .aaa-in-l{animation:aaaSlideInL .38s ease both}
+      .aaa-in-fade{animation:aaaFadeIn .45s ease both}
+      @keyframes aaaKenBurns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.09) translate(-1.2%,-1%)}}
+      .hero img{animation:aaaKenBurns 26s ease-in-out infinite alternate}
+      #scene-img{animation:aaaKenBurns 26s ease-in-out infinite alternate}
+      body::after{content:"";position:fixed;inset:0;z-index:30;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>"),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.32) 100%);background-size:180px 180px,auto}
+      #scene{z-index:80}
+      .toast{z-index:75}
+      body.aaa-pager-on .toast{bottom:78px}
+      #aaa-loader{position:fixed;inset:0;z-index:95;background:#0d0b08;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--paper);text-align:center;padding:20px}
+      #aaa-loader.on{display:flex}
+      .aaa-loader-t{font-family:"Special Elite",monospace;font-size:1.5rem;letter-spacing:.18em}
+      .aaa-loader-s{color:var(--muted);font-size:.95rem}
+      .aaa-loader-s span span{animation:aaaBlink 1.2s infinite}
+      .aaa-loader-s span span:nth-child(2){animation-delay:.2s}
+      .aaa-loader-s span span:nth-child(3){animation-delay:.4s}
+      @keyframes aaaBlink{0%,100%{opacity:.2}50%{opacity:1}}
+      .aaa-voice{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
+      .aaa-voice .mini-btn[aria-pressed="true"]{background:var(--brass);color:#14110c;border-color:var(--brass)}
+      .aaa-mode-chip{display:inline-block;background:#211b10;border:1px solid var(--brass);color:var(--brass);border-radius:99px;padding:2px 10px;font-family:"Special Elite",monospace;font-size:.72rem;letter-spacing:.1em}
+      .aaa-trailer-card video{width:100%;border-radius:10px;background:#000;display:block}
+      @media (prefers-reduced-motion:reduce){.hero img,#scene-img,.aaa-in-r,.aaa-in-l,.aaa-in-fade{animation:none}}
     </style>
   </head>
   <body>
@@ -539,6 +574,17 @@
           </div>
         </div>
 
+        <section class="card aaa-trailer-card" id="aaa-trailer-card" style="margin-top:14px">
+          <span class="kicker">🎬 Official trailer</span>
+          <h2 style="margin:6px 0 4px">32 cases. One truth.</h2>
+          <p class="hint" style="margin:0 0 10px">Watch the trailer — then create a room and play with your friends.</p>
+          <video id="aaa-trailer" src="videos/trailer.mp4" preload="metadata" playsinline controls style="width:100%;border-radius:10px;background:#000;display:block"></video>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+            <button class="mini-btn" type="button" id="aaa-trailer-play">▶ Play trailer</button>
+            <button class="mini-btn" type="button" id="aaa-trailer-mute" aria-pressed="false">🔊 Trailer sound on</button>
+            <span class="hint" id="aaa-trailer-note"></span>
+          </div>
+        </section>
         <div class="home-grid">
           <section class="card">
             <span class="kicker">Play together · 2–4 players</span>
@@ -2380,9 +2426,9 @@
         var HINTS=["Start with the door log (E-03), then open Sofia's scene and ask her where she was at 02:17 — and follow up.","Scrub the CCTV puzzle on the Board tab to 02:14, then check who CAM 4 shows at that same minute (E-06).","Weigh Crate #7 on the Board tab: a bare frame is about 6 kg. Ask what else has to be inside to reach 14.2 kg."];
         var hintIdx=0;
         $("btn-hint").addEventListener("click",function(){
-          if(hintsLeft<=0){ $("hint-text").textContent="No hints left — the file has everything. Trust the timestamps over the motives."; return; }
+          if(hintsLeft<=0){ $("hint-text").textContent="No hints left — the file has everything. Trust the timestamps over the motives."; aaaSpeakHint("No hints left — the file has everything. Trust the timestamps over the motives."); return; }
           hintsLeft--; $("hint-left").textContent=hintsLeft;
-          $("hint-text").textContent="💡 "+HINTS[Math.min(hintIdx,HINTS.length-1)]; hintIdx++;
+          $("hint-text").textContent="💡 "+HINTS[Math.min(hintIdx,HINTS.length-1)]; hintIdx++; aaaSpeakHint($("hint-text").textContent);
         });
 
         /* suspicion + notebook state */
@@ -2545,7 +2591,7 @@
 
         /* ---- puzzles ---- */
         var PHINTS={cctv:"The log (E-04) names the exact minutes. Drag until the status turns to blackout.",finger:"Whose job was it to handle the frame that afternoon? Check E-08.",crate:"Try frame + canvas + packing. Leave the tools out.",door:"Night follows evening: lock-up first, then the small hours in order."};
-        document.querySelectorAll("[data-hint]").forEach(function(b){ b.addEventListener("click",function(){ var k=b.getAttribute("data-hint"); var t=document.querySelector("[data-hint-text='"+k+"']"); if(t) t.textContent=PHINTS[k]; }); });
+        document.querySelectorAll("[data-hint]").forEach(function(b){ b.addEventListener("click",function(){ var k=b.getAttribute("data-hint"); var t=document.querySelector("[data-hint-text='"+k+"']"); if(t) t.textContent=PHINTS[k]; aaaSpeakHint(PHINTS[k]); }); });
         function puzzleDone(id,el,msg,clue){ if(!puzzlesDone.has(id)){ puzzlesDone.add(id); } $(el).textContent=msg; unlockClue(clue); updateHUD(); persist(); }
         $("cctv-slider").addEventListener("input",function(){
           var m=+this.value, hh="02:"+String(m).padStart(2,"0"); $("cctv-time").textContent=hh;
@@ -2763,9 +2809,9 @@
         var hintsLeft2=3, hintIdx2=0;
         var HINTS2=["Follow the glass, not the food: D-02 and D-03 together say the poison was never in anything shared.","Ask James where he was at 20:25 — then ask Clara who prepared the toast glasses.","Three suspects are cleared by records (D-05, D-06, D-07). Whose evening has no record at all?"];
         $("btn-hint2").addEventListener("click",function(){
-          if(hintsLeft2<=0){ $("hint-text2").textContent="No hints left — the file has everything. Trust the records over the motives."; return; }
+          if(hintsLeft2<=0){ $("hint-text2").textContent="No hints left — the file has everything. Trust the records over the motives."; aaaSpeakHint("No hints left — the file has everything. Trust the records over the motives."); return; }
           hintsLeft2--; $("hint-left2").textContent=hintsLeft2;
-          $("hint-text2").textContent="💡 "+HINTS2[Math.min(hintIdx2,HINTS2.length-1)]; hintIdx2++;
+          $("hint-text2").textContent="💡 "+HINTS2[Math.min(hintIdx2,HINTS2.length-1)]; hintIdx2++; aaaSpeakHint($("hint-text2").textContent);
         });
 
         /* solve 2 */
@@ -22487,7 +22533,7 @@
           GC.puzzles.forEach(function(p, pi){
             var div = document.createElement("div"); div.className = "puzzle";
             var optsHtml = p.opts.map(function(o){ return "<button class='mini-btn' type='button' data-gpz='"+pi+"' data-gpv='"+o.v+"'>"+o.label+"</button>"; }).join("");
-            div.innerHTML = "<h3>"+p.title+"</h3><p class='hint'>"+p.hint+"</p><div style='display:flex;gap:8px;flex-wrap:wrap'>"+optsHtml+"</div><p class='hint' data-gpzdone='"+pi+"' style='margin-top:8px'>"+(G.puzzles.has("pz"+pi)?p.done:"")+"</p>";
+            div.innerHTML = "<h3>"+p.title+"</h3><p class='hint'>"+p.hint+"</p><button type='button' class='mini-btn aaa-pz-speak'>\uD83D\uDD0A Listen to hint</button><div style='display:flex;gap:8px;flex-wrap:wrap'>"+optsHtml+"</div><p class='hint' data-gpzdone='"+pi+"' style='margin-top:8px'>"+(G.puzzles.has("pz"+pi)?p.done:"")+"</p>";
             box.appendChild(div);
           });
           box.querySelectorAll("[data-gpz]").forEach(function(b){
@@ -22563,9 +22609,9 @@
           if(solveGWired) return; solveGWired = true;
           $("btn-hintG").addEventListener("click", function(){
             if(!G || !GC) return;
-            if(G.hintsLeft<=0){ $("hint-textG").textContent = "No hints left — the file has everything. Trust the timestamps over the motives."; return; }
+            if(G.hintsLeft<=0){ $("hint-textG").textContent = "No hints left — the file has everything. Trust the timestamps over the motives."; aaaSpeakHint("No hints left — the file has everything. Trust the timestamps over the motives."); return; }
             G.hintsLeft--; $("hint-leftG").textContent = G.hintsLeft;
-            $("hint-textG").textContent = "💡 " + GC.hints[Math.min(G.hintIdx, GC.hints.length-1)]; G.hintIdx++;
+            $("hint-textG").textContent = "💡 " + GC.hints[Math.min(G.hintIdx, GC.hints.length-1)]; G.hintIdx++; aaaSpeakHint($("hint-textG").textContent);
           });
           $("btn-submitG").addEventListener("click", function(){
             if(FB.verdict){ $("solve-errorG").textContent = "Your team's verdict is already locked in — " + FB.verdict.score + " / 3. Talk it over and start a new room to play again."; return; }
@@ -22640,6 +22686,169 @@
 
         renderUnlocked(); updateHUD(); drawLinks();
 
+
+        /* ================= AAA Stage 1: swipe pages, audio hints, ambient, trailer ================= */
+        var AAA_TABS = ["briefing","search","evidence","suspects","board","timeline","clue","solve"];
+        var aaaTabDir = 0;
+        function aaaEl(html){ var d=document.createElement("div"); d.innerHTML=html; return d.firstChild; }
+        function aaaActiveCaseView(){ if(!$("view-case").classList.contains("hidden")) return 1; if(!$("view-case2").classList.contains("hidden")) return 2; if(!$("view-caseG").classList.contains("hidden")) return 3; return 0; }
+        function aaaTabBtns(v){ if(v===1) return document.querySelectorAll("#tabs [data-tab]"); if(v===2) return document.querySelectorAll("#tabs2 [data-tab2]"); return document.querySelectorAll("#tabsG [data-tabG]"); }
+        function aaaTabAttr(v){ return v===1?"data-tab":(v===2?"data-tab2":"data-tabG"); }
+        function aaaCurrentTab(v){ var bs=aaaTabBtns(v), attr=aaaTabAttr(v); for(var i=0;i<bs.length;i++){ if(bs[i].getAttribute("aria-selected")==="true") return bs[i].getAttribute(attr); } return "briefing"; }
+        function aaaSwitchTab(v,name){ if(v===1) switchTab(name); else if(v===2) switchTab2(name); else switchTabG(name); }
+        function aaaGoTab(dir){ var v=aaaActiveCaseView(); if(!v) return false; var cur=aaaCurrentTab(v); var i=AAA_TABS.indexOf(cur); var j=i+dir; if(j<0||j>=AAA_TABS.length) return false; aaaTabDir=dir; aaaSwitchTab(v,AAA_TABS[j]); return true; }
+        function aaaWrapTab(fn,prefix){ return function(name){ var dir=aaaTabDir; aaaTabDir=0; fn(name); try{ var p=$(prefix+"-"+name); if(p&&dir!==0){ p.classList.remove("aaa-in-r","aaa-in-l"); void p.offsetWidth; p.classList.add(dir>0?"aaa-in-r":"aaa-in-l"); } }catch(e){} aaaPagerSync(); }; }
+        switchTab=aaaWrapTab(switchTab,"panel");
+        switchTab2=aaaWrapTab(switchTab2,"panel2");
+        switchTabG=aaaWrapTab(switchTabG,"panelG");
+        /* ---- pager: arrows + dots + mute ---- */
+        var aaaPager=aaaEl('<div class="aaa-pager" id="aaa-pager" role="navigation" aria-label="Case pages"><button type="button" class="aaa-arrow" id="aaa-prev" aria-label="Previous page">\u2039</button><div class="aaa-dots" id="aaa-dots"></div><button type="button" class="aaa-arrow" id="aaa-next" aria-label="Next page">\u203A</button><button type="button" class="aaa-mute" id="aaa-mute" aria-pressed="false" title="Sound on/off">\uD83D\uDD0A</button></div>');
+        document.body.appendChild(aaaPager);
+        (function(){ var d=$("aaa-dots"); for(var i=0;i<AAA_TABS.length;i++){ var b=document.createElement("button"); b.type="button"; b.className="aaa-dot"; b.setAttribute("aria-label","Go to page "+(i+1)+" ("+AAA_TABS[i]+")"); b.setAttribute("data-dot",String(i)); d.appendChild(b); } })();
+        function aaaPagerSync(){
+          var v=aaaActiveCaseView();
+          var sceneOpen=!$("scene").classList.contains("hidden");
+          var on=v!==0 && !sceneOpen;
+          aaaPager.classList.toggle("on", on);
+          document.body.classList.toggle("aaa-pager-on", on);
+          if(!on) return;
+          var cur=aaaCurrentTab(v), idx=AAA_TABS.indexOf(cur);
+          var dots=document.querySelectorAll("#aaa-dots .aaa-dot");
+          for(var i=0;i<dots.length;i++){ dots[i].classList.toggle("on", i===idx); }
+          $("aaa-prev").disabled = idx<=0;
+          $("aaa-next").disabled = idx>=AAA_TABS.length-1;
+        }
+        $("aaa-prev").addEventListener("click", function(){ aaaGoTab(-1); });
+        $("aaa-next").addEventListener("click", function(){ aaaGoTab(1); });
+        $("aaa-dots").addEventListener("click", function(e){ var b=e.target.closest?e.target.closest("[data-dot]"):null; if(!b) return; var v=aaaActiveCaseView(); if(!v) return; var cur=aaaCurrentTab(v); var ci=AAA_TABS.indexOf(cur); var ti=parseInt(b.getAttribute("data-dot"),10); if(ti===ci) return; aaaTabDir=ti>ci?1:-1; aaaSwitchTab(v,AAA_TABS[ti]); });
+        function aaaSyncMuteUI(){ var b=$("aaa-mute"); if(b){ b.textContent=muted?"\uD83D\uDD07":"\uD83D\uDD0A"; b.setAttribute("aria-pressed",String(muted)); } var ob=$("btn-mute"); if(ob){ ob.textContent=muted?"\uD83D\uDD07 Muted":"\uD83D\uDD0A Sound on"; ob.setAttribute("aria-pressed",String(muted)); } }
+        $("aaa-mute").addEventListener("click", function(){ muted=!muted; aaaSyncMuteUI(); if(muted) aaaStopSpeak(); if(!muted) sndPop(); });
+        (function(){ var ob=$("btn-mute"); if(ob) ob.addEventListener("click", function(){ setTimeout(function(){ aaaSyncMuteUI(); if(muted) aaaStopSpeak(); },0); }); })();
+        /* ---- swipe between pages ---- */
+        function aaaSwipeForward(){ var v=aaaActiveCaseView(); if(v){ aaaGoTab(1); return; } if(!$("view-home").classList.contains("hidden")){ show("view-caseselect"); } }
+        function aaaSwipeBack(){ var v=aaaActiveCaseView(); if(v){ aaaGoTab(-1); return; } if(!$("view-caseselect").classList.contains("hidden")){ show("view-home"); return; } if(!$("view-setup").classList.contains("hidden")){ show("view-caseselect"); } }
+        var _tsX=0,_tsY=0,_tsT=0,_tsOk=false;
+        document.addEventListener("touchstart", function(e){ if(!e.touches||e.touches.length!==1) return; var t=e.touches[0]; _tsX=t.clientX; _tsY=t.clientY; _tsT=Date.now(); _tsOk=true; }, {passive:true});
+        document.addEventListener("touchend", function(e){
+          if(!_tsOk) return; _tsOk=false;
+          if(!e.changedTouches||!e.changedTouches.length) return;
+          var t=e.changedTouches[0], dx=t.clientX-_tsX, dy=t.clientY-_tsY;
+          if(Math.abs(dx)<60 || Math.abs(dx)<Math.abs(dy)*1.4 || Date.now()-_tsT>900) return;
+          var tag=(e.target&&e.target.tagName||"").toLowerCase();
+          if(tag==="input"||tag==="textarea"||tag==="select") return;
+          if(e.target&&e.target.closest&&(e.target.closest("video")||e.target.closest("#scene")||e.target.closest("#panel-board")||e.target.closest("#panel2-board")||e.target.closest("#panelG-board")||e.target.closest("canvas"))) return;
+          if(!$("scene").classList.contains("hidden")) return;
+          if(dx<0) aaaSwipeForward(); else aaaSwipeBack();
+        }, {passive:true});
+        document.addEventListener("keydown", function(e){
+          if(e.metaKey||e.ctrlKey||e.altKey) return;
+          if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight") return;
+          var tag=(e.target&&e.target.tagName||"").toLowerCase();
+          if(tag==="input"||tag==="textarea"||tag==="select") return;
+          if(!$("scene").classList.contains("hidden")) return;
+          if(e.key==="ArrowRight") aaaSwipeForward(); else aaaSwipeBack();
+        });
+        /* ---- view transitions ---- */
+        var _showAAA=show;
+        show=function(id){ _showAAA(id); try{ var el=$(id); if(el){ el.classList.remove("aaa-in-fade"); void el.offsetWidth; el.classList.add("aaa-in-fade"); } }catch(e){} aaaPagerSync(); };
+        /* ---- loading screen on case open ---- */
+        var aaaLoader=aaaEl('<div id="aaa-loader" aria-hidden="true"><div class="aaa-loader-t">THE LOCKED GALLERY</div><div class="aaa-loader-s">Opening the case file<span><span>.</span><span>.</span><span>.</span></span></div></div>');
+        document.body.appendChild(aaaLoader);
+        var _enterCaseAAA=enterCase;
+        enterCase=function(){ aaaLoader.classList.add("on"); try{ _enterCaseAAA(); }catch(e){} setTimeout(function(){ aaaLoader.classList.remove("on"); aaaHudRefresh(); },950); };
+        /* ---- richer HUD: mode + case chip ---- */
+        function aaaModeOf(id){ if(id<=12) return "NORMAL"; if(id<=22) return "HARD"; return "GOD"; }
+        ["view-case","view-case2","view-caseG"].forEach(function(vid){ var v=$(vid); if(!v) return; var row=v.querySelector(".hud-row"); if(row){ var s=document.createElement("span"); s.id="aaa-mode-chip-"+vid; s.className="aaa-mode-chip"; s.textContent="◆ Case"; row.insertBefore(s,row.firstChild); } });
+        function aaaHudRefresh(){ var id=currentCase||state.caseId||1; var vis=aaaActiveCaseView(); var pct=""; var f=vis===1?$("hud-fill"):vis===2?$("hud-fill2"):$("hud-fillG"); if(f) pct=f.style.width||""; var txt="◆ "+aaaModeOf(id)+" · Case "+String(id).padStart(2,"0")+"/32"+(pct?" · "+pct:""); document.querySelectorAll("[id^='aaa-mode-chip-']").forEach(function(s){ s.textContent=txt; }); }
+        var _updHUD=updateHUD, _updHUD2=updateHUD2, _updHUDG=updateHUDG;
+        updateHUD=function(){ _updHUD(); aaaHudRefresh(); };
+        updateHUD2=function(){ _updHUD2(); aaaHudRefresh(); };
+        updateHUDG=function(){ _updHUDG(); aaaHudRefresh(); };
+        /* ---- audio hints: speechSynthesis, male/female voices ---- */
+        var AAA_VOICE_KEY="lg-hint-voice";
+        var aaaVoice=(function(){ try{ return localStorage.getItem(AAA_VOICE_KEY)||"female"; }catch(e){ return "female"; } })();
+        try{ if(window.speechSynthesis) window.speechSynthesis.getVoices(); }catch(e){}
+        function aaaPickVoice(gender){
+          var vs=[]; try{ vs=window.speechSynthesis?window.speechSynthesis.getVoices():[]; }catch(e){ vs=[]; }
+          if(!vs.length) return null;
+          var en=vs.filter(function(v){ return (v.lang||"").toLowerCase().indexOf("en")===0; });
+          var pool=en.length?en:vs;
+          var fem=["female","samantha","zira","aria","jenny","sonia","karen","moira","tessa","serena","google us english","google uk english female","veena","fiona","susan","allison","ava"];
+          var male=["male","david","daniel","guy","ryan","alex","fred","james","aaron","google uk english male","thomas","mark","paul","george"];
+          var words=gender==="female"?fem:male, other=gender==="female"?male:fem;
+          var best=null, bestS=-1e9;
+          pool.forEach(function(v){ var n=(v.name||"").toLowerCase(), s=0; words.forEach(function(w){ if(n.indexOf(w)>=0) s+=2; }); other.forEach(function(w){ if(n.indexOf(w)>=0) s-=3; }); var lg=(v.lang||"").toLowerCase(); if(lg==="en-us"||lg==="en-gb") s+=1; if(s>bestS){ bestS=s; best=v; } });
+          return best;
+        }
+        function aaaSpeakHint(text){
+          if(!text) return;
+          try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){}
+          if(muted) return;
+          var clean=String(text).replace(/<[^>]*>/g," ").replace(/[\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF\uFE0F]/g,"").replace(/\s+/g," ").trim();
+          if(!clean) return;
+          try{
+            if(!("speechSynthesis" in window)||!window.speechSynthesis) return;
+            var u=new SpeechSynthesisUtterance(clean);
+            var v=aaaPickVoice(aaaVoice); if(v) u.voice=v;
+            u.rate=1; u.pitch=aaaVoice==="female"?1.1:0.9;
+            window.speechSynthesis.speak(u);
+          }catch(e){}
+        }
+        function aaaStopSpeak(){ try{ if(window.speechSynthesis) window.speechSynthesis.cancel(); }catch(e){} }
+        function aaaSyncVoiceUI(){ document.querySelectorAll("[data-voice]").forEach(function(b){ b.setAttribute("aria-pressed",String(b.getAttribute("data-voice")===aaaVoice)); }); }
+        function aaaSetVoice(g){ aaaVoice=g; try{ localStorage.setItem(AAA_VOICE_KEY,g); }catch(e){} aaaSyncVoiceUI(); aaaSpeakHint(g==="female"?"Hint voice set to female.":"Hint voice set to male."); }
+        (function(){
+          var html='<span class="aaa-voice">\uD83C\uDF99\uFE0F <button type="button" class="mini-btn" data-voice="female" aria-pressed="'+(aaaVoice==="female")+'">\u2640 Female</button><button type="button" class="mini-btn" data-voice="male" aria-pressed="'+(aaaVoice==="male")+'">\u2642 Male</button><button type="button" class="mini-btn aaa-vstop" title="Stop spoken hint">\u25A0 Stop</button></span>';
+          ["btn-hint","btn-hint2","btn-hintG"].forEach(function(id){ var b=$(id); if(b&&b.parentNode){ var s=aaaEl(html); b.parentNode.insertBefore(s,b.nextSibling); } });
+        })();
+        document.addEventListener("click", function(e){
+          var t=e.target&&e.target.closest?e.target.closest("[data-voice]"):null;
+          if(t){ aaaSetVoice(t.getAttribute("data-voice")); return; }
+          if(e.target&&e.target.closest&&e.target.closest(".aaa-vstop")){ aaaStopSpeak(); return; }
+          var b=e.target&&e.target.closest?e.target.closest(".aaa-pz-speak"):null;
+          if(b){ var box=b.parentNode; var h=box?box.querySelector("p.hint"):null; if(h) aaaSpeakHint(h.textContent); }
+        });
+        /* ---- ambient sound + soft music (WebAudio, gated by the same mute) ---- */
+        var aaaMaster=null, aaaPadOn=false;
+        function aaaAudioInit(){
+          if(aaaPadOn) return;
+          try{
+            audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+            if(audioCtx.state==="suspended") audioCtx.resume();
+            aaaMaster=audioCtx.createGain(); aaaMaster.gain.value=muted?0:0.9; aaaMaster.connect(audioCtx.destination);
+            var filt=audioCtx.createBiquadFilter(); filt.type="lowpass"; filt.frequency.value=700; filt.connect(aaaMaster);
+            [110,164.81,220.5].forEach(function(f,i){ var o=audioCtx.createOscillator(); o.type=i===2?"triangle":"sine"; o.frequency.value=f; var g=audioCtx.createGain(); g.gain.value=i===2?0.008:0.02; o.connect(g); g.connect(filt); o.start(); });
+            var lfo=audioCtx.createOscillator(); lfo.frequency.value=0.07; var lg=audioCtx.createGain(); lg.gain.value=260; lfo.connect(lg); lg.connect(filt.frequency); lfo.start();
+            aaaPadOn=true;
+            setInterval(function(){
+              if(muted||!aaaPadOn) return;
+              try{
+                if(audioCtx.state==="suspended") return;
+                var notes=[220,261.63,293.66,329.63,392,440];
+                var f=notes[Math.floor(Math.random()*notes.length)];
+                var o=audioCtx.createOscillator(); o.type="sine"; o.frequency.value=f;
+                var g=audioCtx.createGain(); var t0=audioCtx.currentTime;
+                g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.045,t0+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t0+2.2);
+                o.connect(g); g.connect(aaaMaster); o.start(t0); o.stop(t0+2.4);
+              }catch(e){}
+            }, 8000);
+          }catch(e){}
+        }
+        document.addEventListener("pointerdown", function(){ aaaAudioInit(); });
+        document.addEventListener("keydown", function(){ aaaAudioInit(); });
+        setInterval(function(){ try{ if(aaaMaster) aaaMaster.gain.value=muted?0:0.9; }catch(e){} }, 600);
+        /* ---- trailer player (reusable: later batches reuse aaaVideoPlayer) ---- */
+        function aaaVideoPlayer(vid, playBtn, muteBtn, noteEl){
+          if(!vid) return;
+          function hideCard(){ var c=$("aaa-trailer-card"); if(c) c.style.display="none"; }
+          vid.addEventListener("error", hideCard);
+          setTimeout(function(){ try{ if(vid.readyState===0 && vid.networkState===3) hideCard(); }catch(e){} }, 5000);
+          if(playBtn) playBtn.addEventListener("click", function(){ try{ var p=vid.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} });
+          if(muteBtn) muteBtn.addEventListener("click", function(){ vid.muted=!vid.muted; muteBtn.textContent=vid.muted?"\uD83D\uDD07 Trailer muted":"\uD83D\uDD0A Trailer sound on"; muteBtn.setAttribute("aria-pressed",String(vid.muted)); });
+          vid.addEventListener("loadedmetadata", function(){ if(noteEl) noteEl.textContent="Trailer \u00B7 "+Math.round(vid.duration||0)+"s \u00B7 32 cases"; });
+        }
+        aaaVideoPlayer($("aaa-trailer"), $("aaa-trailer-play"), $("aaa-trailer-mute"), $("aaa-trailer-note"));
+        aaaHudRefresh(); aaaPagerSync(); aaaSyncMuteUI(); aaaSyncVoiceUI();
         /* init */
         updateEnterHint();
       })();
