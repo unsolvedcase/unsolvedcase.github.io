@@ -1,0 +1,66 @@
+{
+ "index.html": {
+  "size": 29508220,
+  "md5": "022fe30773ef534fb15d3d991f489430"
+ },
+ "videos/README.md": {
+  "size": 1568,
+  "md5": "96699f55a12e80450af466e613518a8b"
+ },
+ "videos/trailer.mp4": {
+  "size": 24851869,
+  "md5": "9bbf10a1c0bc5b3fd7f824c8bcb24ae4"
+ },
+ "videos/case-01-intro.mp4": {
+  "size": 26274323,
+  "md5": "a59b62f11b2d0fbc85ae505b25e64096"
+ },
+ "videos/case-02-intro.mp4": {
+  "size": 18826771,
+  "md5": "3cb764ccf0d201cb7ece2f81b86a7bd9"
+ },
+ "videos/case-03-intro.mp4": {
+  "size": 18864267,
+  "md5": "0e8bea66e794b4f89a75a698c04ccd8b"
+ },
+ "videos/case-04-intro.mp4": {
+  "size": 25420432,
+  "md5": "ac795b5b84ecb62846974d644e256e51"
+ },
+ "videos/case-05-intro.mp4": {
+  "size": 20393661,
+  "md5": "a45eaaffd7b2cbe1a79e8f820ce93be4"
+ },
+ "videos/case-06-intro.mp4": {
+  "size": 25088935,
+  "md5": "1c085252d20d6185ffd4a10a42a8d82a"
+ },
+ "videos/case-07-intro.mp4": {
+  "size": 24667749,
+  "md5": "7aac406f69071c26094617aec009b5bd"
+ },
+ "videos/case-08-intro.mp4": {
+  "size": 19070497,
+  "md5": "88126d4f3f68db7983d17b5b97186f83"
+ },
+ "videos/case-09-intro.mp4": {
+  "size": 19943975,
+  "md5": "39f77eea5f6b8664d7b4f88296af373e"
+ },
+ "videos/case-10-intro.mp4": {
+  "size": 23325307,
+  "md5": "8e492de8a1c3964187563cee8c9f8db9"
+ },
+ "videos/case-11-intro.mp4": {
+  "size": 19789706,
+  "md5": "abdf5b5f510ab60cce5b8b1126ab60f2"
+ },
+ "videos/case-12-intro.mp4": {
+  "size": 22902830,
+  "md5": "2e0eb4ffbd3dbaa87535bd370d6e5756"
+ },
+ "README.md": {
+  "size": 51,
+  "md5": "237b619c5784798058f503bb7edcf927"
+ }
+}
