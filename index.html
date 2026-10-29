@@ -68,18 +68,184 @@ video{width:100%;border-radius:12px;background:#000}
 .row.ok{border-color:var(--ok)}
 .row.bad{border-color:var(--bad)}
 .litem{text-align:left;width:100%}
-.sort-row{display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap}
-.sort-row span{flex:1;min-width:160px}
-.dial-row{display:flex;gap:12px;justify-content:center;margin:12px 0}
-.wheel{display:flex;flex-direction:column;align-items:center;gap:4px}
-.wheel b{font-size:1.6rem;min-width:44px;text-align:center}
-.match-cols{display:flex;gap:12px}
-.match-cols>div{flex:1;display:flex;flex-direction:column;gap:6px}
-.pz-item{min-width:52px}
 .notice{background:#3a2a10;border:1px solid var(--brass);border-radius:12px;padding:12px;margin:10px 0}
 .foot{color:var(--dim);font-size:.85rem;text-align:center;padding:18px}
+#pz2d{position:fixed;inset:0;z-index:90;background:#0a0b0e;overflow:auto;display:none;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#e8e6df}
+#pz2d.open{display:block}
+.pz2-wrap{max-width:860px;margin:0 auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+#pz2d-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#pz2d-head b{font-size:1.35rem;font-family:"Playfair Display",Georgia,serif;color:#d4a853}
+#pz2d-prog{display:flex;align-items:center;gap:10px;margin:10px 0}
+.pz2-bar{height:10px;background:#2a2113;border-radius:5px;overflow:hidden;flex:1}
+.pz2-bar i{display:block;height:100%;background:#d4a853;width:0%;transition:width .25s ease}
+#pz2d-feedback{margin:12px 0;padding:12px;border-radius:12px;background:#12141a;border:1px solid #2a2e3a;font-size:1.02rem;line-height:1.5;min-height:52px}
+#pz2d-feedback.ok{border-color:#10b981;color:#a7f3d0}
+#pz2d-feedback.bad{border-color:#ef4444;color:#fecaca}
+#pz2d-nudge{color:#2dd4bf;margin:8px 0;min-height:24px;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.92rem}
+#pz2d-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+
 @media (prefers-reduced-motion:reduce){ #sheet{transition:none} }
+/* ===== Locked Gallery v5-fix: forensic terminal puzzle stylesheet =====
+   ROOT CAUSE of the v5 live failure: this stylesheet did not exist.
+   All .pz5-* markup shipped unstyled, so the calibration track rendered
+   0px tall (unhittable), the knob was invisible, and scanlines/crosshairs
+   never appeared. Every rule below is load-bearing. Do not drop it. */
+#pz2d-board{position:relative;padding:18px 16px 24px;border:1px solid #2a2e3a;border-radius:14px;overflow:hidden;
+  background-color:#0a0b0e;
+  background-image:linear-gradient(rgba(45,212,191,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(45,212,191,.05) 1px,transparent 1px);
+  background-size:28px 28px}
+#pz2d-board button{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#pz2d-sub{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;color:#2dd4bf;letter-spacing:.05em}
+#pz2d-count{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;color:#d4a853;white-space:nowrap}
+#pz2d-board .pz5-scanlines{position:absolute;inset:0;pointer-events:none;z-index:5;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px)}
+#pz2d-board .pz5-cross{position:absolute;width:22px;height:22px;pointer-events:none;z-index:6}
+#pz2d-board .pz5-cross.tl{top:8px;left:8px;border-top:2px solid #2dd4bf;border-left:2px solid #2dd4bf}
+#pz2d-board .pz5-cross.tr{top:8px;right:8px;border-top:2px solid #2dd4bf;border-right:2px solid #2dd4bf}
+#pz2d-board .pz5-cross.bl{bottom:8px;left:8px;border-bottom:2px solid #2dd4bf;border-left:2px solid #2dd4bf}
+#pz2d-board .pz5-cross.br{bottom:8px;right:8px;border-bottom:2px solid #2dd4bf;border-right:2px solid #2dd4bf}
+/* ---- stage-1 instrument header (flex gap fixes the run-together telemetry) ---- */
+.pz5-inst-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 10px}
+.pz5-inst-name{font-family:"Playfair Display",Georgia,serif;color:#d4a853;font-size:1.15rem;letter-spacing:.02em}
+.pz5-tel{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;color:#2dd4bf;font-size:.9rem;white-space:nowrap}
+.pz5-line{color:#e8e6df;line-height:1.55;margin:10px 0;font-size:1rem}
+/* ---- THE calibration track: 56px hit area, visible rail, 44px knob ---- */
+.pz5-track{position:relative;height:56px;margin:18px 0 8px;border:1px solid #3a3f4d;border-radius:10px;
+  background:linear-gradient(180deg,#14161d,#0d0f14);touch-action:none;cursor:grab}
+.pz5-track::before{content:"";position:absolute;left:6px;right:6px;top:50%;height:10px;transform:translateY(-50%);
+  background:#2a2113;border-radius:5px;box-shadow:inset 0 0 0 1px #4a3b1a}
+.pz5-knob{position:absolute;top:50%;width:44px;height:44px;margin-top:-22px;border-radius:50%;z-index:2;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,#f0d488,#d4a853 55%,#8a6a1f);
+  border:2px solid #f5e9c8;box-shadow:0 0 18px rgba(212,168,83,.65),0 2px 6px rgba(0,0,0,.6)}
+.pz5-knob::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#0a0b0e}
+.pz5-lock{display:block;width:100%;margin:16px 0 4px;padding:16px;border-radius:12px;border:1px solid #d4a853;
+  background:#d4a853;color:#0a0b0e;font-size:1.05rem;font-weight:700;cursor:pointer}
+.pz5-lock:active{transform:translateY(1px)}
+/* ---- neutral stage-1 strip visualization (frames, NO anomaly marking) ---- */
+.pz5-stripviz{display:flex;gap:6px;margin:4px 0 2px;overflow:hidden}
+.pz5-svcell{flex:1;min-width:0;border:1px solid rgba(45,212,191,.35);border-radius:6px;padding:8px 2px;text-align:center;
+  color:#2dd4bf;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.75rem;background:rgba(45,212,191,.06)}
+.pz5-svcell i{display:block;font-style:normal;font-size:1rem}
+.pz5-svcell b{font-weight:400}
+/* ---- breakers ---- */
+.pz5-breakers{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px;margin:16px 0}
+.pz5-breaker{padding:14px 8px;border-radius:10px;border:1px solid #3a3f4d;background:#12141a;color:#e8e6df;cursor:pointer;min-height:64px}
+.pz5-breaker.on{border-color:#10b981;background:rgba(16,185,129,.15);color:#a7f3d0}
+.pz5-brk-label{display:block;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.8rem}
+.pz5-brk-state{display:block;font-weight:700;margin-top:4px}
+/* ---- overlay aligner / tare beam ---- */
+.pz5-overlay-wrap{position:relative;margin:16px 0;overflow:hidden;border:1px solid #3a3f4d;border-radius:10px;padding:14px;background:#12141a}
+.pz5-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+.pz5-strip span{color:#d4a853;font-size:.8rem;min-width:90px}
+.pz5-strip i{font-style:normal;letter-spacing:.2em;color:#e8e6df}
+.pz5-strip.ovl{color:#2dd4bf;transition:transform .12s ease}
+.pz5-beam{display:inline-block;margin:14px 0;padding:14px 18px;border:1px solid #3a3f4d;border-radius:10px;background:#12141a;
+  color:#d4a853;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:1.1rem;transform-origin:center;transition:transform .15s ease}
+/* ---- stage-2 shared controls: 46px+ touch targets ---- */
+.pz5-tray{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.pz5-tile,.pz5-item,.pz5-link,.pz5-legend{padding:13px 16px;border-radius:10px;border:1px solid #3a3f4d;background:#12141a;
+  color:#e8e6df;font-size:1rem;cursor:pointer;min-height:46px}
+.pz5-item.held,.pz5-link.held{border-color:#d4a853;box-shadow:0 0 0 2px rgba(212,168,83,.35)}
+.pz5-link.ok{border-color:#10b981;color:#a7f3d0}
+.pz5-slots{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.pz5-slot{display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px dashed #3a3f4d;border-radius:10px;background:#101218;min-height:46px}
+.pz5-slot.next{border-color:#d4a853;border-style:solid}
+.pz5-slotnum{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;color:#d4a853}
+.pz5-slotval{color:#e8e6df}
+.pz5-word{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:1.4rem;letter-spacing:.35em;color:#2dd4bf;text-align:center;margin:14px 0}
+.pz5-noise-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.pz5-noise{padding:10px 14px;border-radius:10px;border:1px dashed #4b5563;background:#0d0f14;color:#8b93a7;
+  font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;cursor:pointer;min-height:44px}
+/* ---- bins ---- */
+.pz5-bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.pz5-bin{border:1px solid #3a3f4d;border-radius:12px;padding:12px;background:#101218}
+.pz5-bin b{display:block;color:#d4a853;margin-bottom:6px}
+.pz5-bincount{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.8rem;color:#8b93a7}
+.pz5-binitems{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.pz5-filed{padding:6px 9px;border-radius:8px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:#a7f3d0;font-size:.9rem}
+.pz5-binbtn{width:100%;padding:12px;border-radius:10px;border:1px solid #d4a853;background:transparent;color:#d4a853;font-weight:700;cursor:pointer;min-height:46px}
+/* ---- wheels ---- */
+.pz5-fmt{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:1.6rem;color:#d4a853;text-align:center;margin:12px 0}
+.pz5-wheels{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0}
+.pz5-wheel{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid #3a3f4d;border-radius:12px;padding:10px;background:#101218}
+.pz5-wbtn{width:52px;height:44px;border-radius:8px;border:1px solid #3a3f4d;background:#1a1e28;color:#e8e6df;font-size:1.1rem;cursor:pointer}
+.pz5-digit{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:1.8rem;color:#e8e6df;min-height:44px;display:flex;align-items:center}
+.pz5-digit.ok{color:#10b981}
+.pz5-pinbtn{padding:12px 16px;border-radius:10px;border:1px solid #2dd4bf;background:transparent;color:#2dd4bf;font-weight:700;cursor:pointer;min-height:46px}
+.pz5-pinbtn.ok{border-color:#10b981;color:#10b981;background:rgba(16,185,129,.12)}
+/* ---- connect ---- */
+.pz5-connect{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.pz5-col{display:flex;flex-direction:column;gap:10px}
+.pz5-links{margin:10px 0;display:flex;flex-direction:column;gap:6px}
+.pz5-linkline{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.9rem;color:#2dd4bf}
+.pz5-linkline svg line{stroke:#2dd4bf;stroke-width:2}
+/* ---- memory ---- */
+.pz5-memory{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin:14px 0}
+.pz5-card{padding:16px 10px;border-radius:10px;border:1px solid #3a3f4d;background:#12141a;color:#e8e6df;font-size:.95rem;cursor:pointer;min-height:64px}
+.pz5-card.up{background:#1a1e28;border-color:#d4a853}
+.pz5-card.ok{border-color:#10b981;color:#a7f3d0}
+/* ---- prints ---- */
+.pz5-ref{display:flex;gap:14px;align-items:center;margin:14px 0;padding:12px;border:1px solid #3a3f4d;border-radius:12px;background:#101218}
+.pz5-refcap{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85rem;color:#8b93a7}
+#pz5-refprint,#pz5-compprint,.pz5-printcv{border:1px solid #3a3f4d;border-radius:8px;background:#0d0f14}
+.pz5-printcard{padding:12px;border-radius:12px;border:1px solid #3a3f4d;background:#12141a;color:#e8e6df;cursor:pointer;min-height:120px}
+.pz5-printcard.examined{border-color:#2dd4bf}
+.pz5-printcard.ok{border-color:#10b981}
+.pz5-printcover{padding:26px 10px;color:#8b93a7;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+.pz5-compare{display:flex;gap:14px;align-items:center;margin:14px 0;padding:12px;border:1px solid #3a3f4d;border-radius:12px;background:#101218}
+/* ---- scale ---- */
+.pz5-balance{border:1px solid #3a3f4d;border-radius:12px;padding:14px;margin:14px 0;background:#101218;text-align:center}
+.pz5-pan{margin:10px 0;color:#e8e6df}
+.pz5-readout{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;color:#2dd4bf;margin:10px 0}
+.pz5-block{padding:13px 16px;border-radius:10px;border:1px solid #3a3f4d;background:#12141a;color:#e8e6df;font-size:1rem;cursor:pointer;min-height:46px}
+.pz5-block.on{border-color:#10b981;color:#a7f3d0;background:rgba(16,185,129,.1)}
+/* ---- frames ---- */
+.pz5-viewer{border:1px solid #3a3f4d;border-radius:12px;padding:18px;margin:14px 0;background:#101218;text-align:center;min-height:90px}
+.pz5-viewer.anomaly{border-color:#ef4444;background:rgba(239,68,68,.08)}
+.pz5-viewlabel{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;color:#2dd4bf}
+.pz5-framedesc{margin-top:8px;color:#e8e6df}
+.pz5-frame{padding:12px;border-radius:8px;border:1px solid #3a3f4d;background:#12141a;color:#e8e6df;
+  font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;cursor:pointer;min-height:46px;min-width:52px}
+.pz5-frame.sel{border-color:#d4a853}
+.pz5-frame.anomaly{border-color:#ef4444;color:#fecaca}
+.pz5-frame.static{color:#8b93a7}
+/* ---- gauge ---- */
+.pz5-gaugeval{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:1.5rem;color:#d4a853;text-align:center;margin:12px 0}
+.pz5-viz{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;justify-content:center}
+.pz5-vbox{padding:8px 10px;border-radius:8px;border:1px solid #3a3f4d;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85rem;color:#8b93a7}
+.pz5-vbox.sel{border-color:#d4a853;color:#d4a853}
+/* ---- vessels ---- */
+.pz5-vessel{border:1px solid #3a3f4d;border-radius:12px;padding:12px;background:#101218;min-width:130px;text-align:center}
+.pz5-vessel.tested{border-color:#2dd4bf}
+.pz5-liquid{height:26px;border-radius:6px;background:linear-gradient(180deg,rgba(45,212,191,.35),rgba(45,212,191,.1));margin:10px 0;border:1px solid #2a2e3a}
+.pz5-result{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85rem;margin:8px 0;color:#8b93a7}
+.pz5-result.ok{color:#10b981}
+.pz5-result.bad{color:#ef4444}
+.pz5-vbtn{padding:12px 18px;border-radius:10px;border:1px solid #2dd4bf;background:transparent;color:#2dd4bf;font-weight:700;cursor:pointer;min-height:46px}
+/* ---- floorplan ---- */
+.pz5-floorplan{position:relative;margin:14px 0}
+.pz5-plan-svg{width:100%;max-width:520px;height:auto;display:block}
+.pz5-plan-room{fill:#101218;stroke:#3a3f4d;stroke-width:2}
+.pz5-plan-label{fill:#8b93a7;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:11px}
+.pz5-plan-nodes{position:absolute;inset:0;pointer-events:none}
+.pz5-plannode{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:2px solid #d4a853;
+  background:rgba(212,168,83,.2);color:#d4a853;font-size:1rem;cursor:pointer;pointer-events:auto}
+.pz5-plan-legend{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+/* ---- verify + verified ---- */
+.pz5-verify-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 4px}
+.pz5-verify{padding:15px 22px;border-radius:12px;border:1px solid #3a3f4d;background:#1a1e28;color:#8b93a7;font-weight:700;cursor:not-allowed;min-height:50px}
+.pz5-verify.ready{border-color:#10b981;background:#10b981;color:#0a0b0e;cursor:pointer}
+.pz5-verify-note{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.85rem;color:#8b93a7}
+.pz5-verified{border:1px solid #10b981;border-radius:14px;padding:20px;background:rgba(16,185,129,.08);text-align:center}
+.pz5-verified-mark{font-family:"Playfair Display",Georgia,serif;font-size:1.6rem;color:#10b981;margin-bottom:10px}
+.pz5-takeaway{margin-top:14px;padding:14px;border-radius:10px;border:1px solid rgba(212,168,83,.35);background:#12141a;text-align:left}
+.pz5-takeaway-head{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:.8rem;letter-spacing:.15em;color:#d4a853;margin-bottom:6px}
+.pz5-continue{margin-top:16px;padding:14px 20px;border-radius:10px;border:1px solid #10b981;background:#10b981;color:#0a0b0e;font-weight:700;cursor:pointer;min-height:48px}
+
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <!-- ============ HOME ============ -->
@@ -161,14 +327,6 @@ video{width:100%;border-radius:12px;background:#000}
     <div id="joywrap" class="hidden"><div id="joy"><div id="joy-knob"></div></div></div>
   </div>
   <div id="objective"></div>
-  <div id="pzbar" class="hidden" style="margin:10px 0;padding:10px;border:1px solid #c9a227;border-radius:10px;background:#171310">
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <b id="pz-title" style="flex:1">🧩 Puzzle</b>
-      <button class="btn ghost" id="pz-hint" data-act="pz-hint" data-idx="0">💡 Hint</button>
-      <button class="btn ghost" data-act="pz-close">✕ Close</button>
-    </div>
-    <div id="pz-readout" class="sheet-sub" style="margin-top:6px"></div>
-  </div>
   <div id="listview" class="hidden"></div>
   <div class="actionbar">
     <button class="btn" data-act="hud-hint">💡 Hint</button>
@@ -191,6 +349,20 @@ video{width:100%;border-radius:12px;background:#000}
 <div id="sheet"></div>
 <div id="toast"></div>
 <div id="pz-flash"></div>
+<div id="pz2d">
+  <div class="pz2-wrap">
+    <div id="pz2d-head"><b id="pz2d-title">🧩 Puzzle</b><button class="btn ghost" id="pz2d-close">✕ Close</button></div>
+    <p id="pz2d-goal" class="sheet-line"></p>
+    <p id="pz2d-sub" class="sheet-note"></p>
+    <div id="pz2d-prog"><div class="pz2-bar"><i id="pz2d-fill"></i></div><span id="pz2d-count"></span></div>
+    <div id="pz2d-board"></div>
+    <div id="pz2d-feedback"></div>
+    <div id="pz2d-nudge"></div>
+    <div id="pz2d-actions"><button class="btn ghost" id="pz2d-hint">💡 Hint</button><button class="btn ghost" id="pz2d-nudgebtn">👀 Nudge</button></div>
+    <div id="pz2d-solve" class="hidden"></div>
+  </div>
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
 <script>
@@ -356,7 +528,7 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2800);
 }
 function openSheet(html, keepPuzzle){
-  if(!keepPuzzle){ try{ closePuzzle3D(); }catch(e){} }
+  if(!keepPuzzle){ try{ closePuzzle5(); }catch(e){} }
   var sh = $("sheet"); sh.innerHTML = html; sh.classList.add("open");
 }
 function closeSheet(){ var sh = $("sheet"); sh.innerHTML = ""; sh.classList.remove("open"); }
@@ -535,20 +707,25 @@ function makeLabelSprite(text, scale){
     words.forEach(function(wd){ var t = cur ? cur + " " + wd : wd; if(t.length > 26 && cur){ lines.push(cur); cur = wd; } else cur = t; });
     if(cur) lines.push(cur);
     lines = lines.slice(0, 2);
-    var cv = document.createElement("canvas"); cv.width = 512; cv.height = lines.length > 1 ? 168 : 112;
+    var cv = document.createElement("canvas");
+    var ctx0 = document.createElement("canvas").getContext("2d");
+    var tw = 0;
+    if(ctx0){ ctx0.font = "bold 40px sans-serif"; lines.forEach(function(ln){ var w = ctx0.measureText(ln).width; if(w > tw) tw = w; }); }
+    var cw = Math.max(120, Math.min(512, Math.ceil(tw) + 48));
+    cv.width = cw; cv.height = lines.length > 1 ? 168 : 112;
     var ctx = cv.getContext("2d");
     ctx.fillStyle = "rgba(10,8,4,0.85)";
     var bh = lines.length > 1 ? 140 : 84;
-    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(6, 14, 500, bh, 26); ctx.fill(); }
-    else { ctx.fillRect(6, 14, 500, bh); }
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(6, 14, cw - 12, bh, 26); ctx.fill(); }
+    else { ctx.fillRect(6, 14, cw - 12, bh); }
     ctx.strokeStyle = "#c9a227"; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = "#f5e9c8"; ctx.font = "bold 40px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    lines.forEach(function(ln, i){ ctx.fillText(ln, 256, lines.length > 1 ? 52 + i * 48 : 58); });
+    lines.forEach(function(ln, i){ ctx.fillText(ln, cw / 2, lines.length > 1 ? 52 + i * 48 : 58); });
     var tex = new THREE.CanvasTexture(cv);
     var mat = new THREE.SpriteMaterial({map: tex, transparent: true, depthTest: true});
     var sp = new THREE.Sprite(mat);
     var hh = lines.length > 1 ? 0.86 : 0.57;
-    sp.scale.set(2.6*(scale||1), hh*(scale||1), 1);
+    sp.scale.set(2.6*(scale||1)*(cw / 512), hh*(scale||1), 1);
     return sp;
   }catch(e){ return null; }
 }
@@ -1809,10 +1986,10 @@ function initScene(){
       orb.position.y = 1.35; g.add(orb); g.userData.orb = orb;
       g.position.set(cx + slot[0], 0, slot[1]);
       g.userData = {kind: "puzz", idx: i};
-      var lab = makeLabelSprite("Puzzle " + (i + 1) + ": " + pz.title, 0.85);
+      var lab = makeLabelSprite("Puzzle " + (i + 1) + " · " + pz.title.replace(/^(?:\S+\s+)?Puzzle\s*\d+\s*[·:]\s*/, ""), 0.85);
       if(lab){ lab.position.y = 1.95; g.add(lab); }
       scene.add(g); puzzMeshes[i] = g;
-      interactables.push({group: g, kind: "puzz", idx: i, label: "Puzzle " + (i + 1) + ": " + pz.title});
+      interactables.push({group: g, kind: "puzz", idx: i, label: "Puzzle " + (i + 1) + " · " + pz.title.replace(/^(?:\S+\s+)?Puzzle\s*\d+\s*[·:]\s*/, "")});
       addCollider(cx + slot[0] - 0.5, cx + slot[0] + 0.5, slot[1] - 0.5, slot[1] + 0.5);
       if(S.puzz[i]) dimGroup(g);
     });
@@ -1858,7 +2035,8 @@ function initScene(){
         var dx = p.x - PL.x, dz = p.z - PL.z;
         var d = Math.sqrt(dx * dx + dz * dz);
         var room = roomAt(p.x, nRooms);
-        var vis = !PZ3D && !sheetOpen && !inspecting && room === PL.room && d < 5.5;
+        var pz2Open = $("pz2d") && $("pz2d").classList.contains("open");
+        var vis = !pz2Open && !sheetOpen && !inspecting && room === PL.room && d < 5.5;
         it.group.traverse(function(o){
           if(o.isSprite){
             o.visible = vis;
@@ -1911,7 +2089,7 @@ function initScene(){
       return best;
     }
     function updatePrompt(){
-      if(PZ3D || ($("sheet") && $("sheet").classList.contains("open"))){
+      if(($("pz2d") && $("pz2d").classList.contains("open")) || inspecting || ($("sheet") && $("sheet").classList.contains("open"))){
         var pr0 = $("prompt"); if(pr0) pr0.classList.add("hidden");
         lastPrompt = ""; return;
       }
@@ -1970,60 +2148,20 @@ function initScene(){
       keys[e.code] = true;
     });
     window.addEventListener("keyup", function(e){ keys[e.code] = false; });
-    // ---- canvas pointer: PZ3D stations first (v1 logic), else FP look/tap ----
+    // ---- canvas pointer: FP look/tap (v4: no 3D stations; plinth taps open the 2D view) ----
     var ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
     function posOf(e){ var t = (e.touches && e.touches[0]) || e; var r = canvas.getBoundingClientRect();
       return {x: t.clientX - r.left, y: t.clientY - r.top}; }
-    function pzPick(e){
-      if(!PZ3D) return null;
-      var p = posOf(e);
-      var r = canvas.getBoundingClientRect();
-      ndc.x = (p.x / r.width) * 2 - 1; ndc.y = -(p.y / r.height) * 2 + 1;
-      ray.setFromCamera(ndc, camera);
-      var hits = ray.intersectObjects(PZ3D.station.group.children, true);
-      for(var i = 0; i < hits.length; i++){
-        var o = hits[i].object, g = o;
-        while(g && !(g.userData && g.userData.pzkind)) g = g.parent;
-        if(g && g.userData && g.userData.pzkind) return {ud: g.userData, obj: g};
-      }
-      return null;
-    }
-    function pzWorldX(e){
-      var p = posOf(e);
-      var r = canvas.getBoundingClientRect();
-      ndc.x = (p.x / r.width) * 2 - 1; ndc.y = -(p.y / r.height) * 2 + 1;
-      ray.setFromCamera(ndc, camera);
-      var plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-      var v = new THREE.Vector3();
-      if(ray.ray.intersectPlane(plane, v)) return v.x;
-      return null;
-    }
     var downPos = null, downTime = 0, lastX = 0, lastY = 0, lookId = null;
     canvas.addEventListener("pointerdown", function(e){
       if(!SCENE || SCENE.stopped) return;
       if(SCENE.isInspecting && SCENE.isInspecting()) return;
-      if(PZ3D){
-        var pk = pzPick(e);
-        PZ3D.downPos = posOf(e); PZ3D.downTime = Date.now(); PZ3D.drag = null;
-        if(pk && (pk.ud.pzkind === "dial" || pk.ud.pzkind === "slider-knob")){
-          PZ3D.drag = pk;
-          PZ3D.station.dragStart(pk.ud, {clientX: PZ3D.downPos.x, clientY: PZ3D.downPos.y, worldX: pzWorldX(e)});
-        }
-        return;
-      }
       lookId = e.pointerId;
       downPos = posOf(e); downTime = Date.now(); lastX = downPos.x; lastY = downPos.y;
     });
     canvas.addEventListener("pointermove", function(e){
       if(!SCENE || SCENE.stopped) return;
       if(SCENE.isInspecting && SCENE.isInspecting()) return;
-      if(PZ3D){
-        if(PZ3D.drag){
-          var pp = posOf(e);
-          PZ3D.station.dragMove(PZ3D.drag.ud, {clientX: pp.x, clientY: pp.y, worldX: pzWorldX(e)});
-        }
-        return;
-      }
       if(!downPos || e.pointerId !== lookId) return;
       var p = posOf(e), dx = p.x - lastX, dy = p.y - lastY; lastX = p.x; lastY = p.y;
       PL.yaw -= dx * 0.005;
@@ -2031,20 +2169,6 @@ function initScene(){
     });
     function endTap(e){
       if(SCENE && SCENE.isInspecting && SCENE.isInspecting()) return;
-      if(PZ3D){
-        var dp = PZ3D.downPos; PZ3D.downPos = null;
-        if(PZ3D.drag){ PZ3D.station.dragEnd(PZ3D.drag.ud); PZ3D.drag = null; return; }
-        if(dp){
-          var p2 = posOf(e);
-          var moved2 = Math.abs(p2.x - dp.x) + Math.abs(p2.y - dp.y);
-          var dt2 = Date.now() - PZ3D.downTime;
-          if(moved2 < 10 && dt2 < 500){
-            var pk2 = pzPick(e);
-            if(pk2) PZ3D.station.tap(pk2.ud);
-          }
-        }
-        return;
-      }
       if(!downPos) return;
       var p = posOf(e);
       var moved = Math.abs(p.x - downPos.x) + Math.abs(p.y - downPos.y);
@@ -2052,7 +2176,7 @@ function initScene(){
       if(moved < 10 && dt < 500) handleTap(p.x, p.y);
     }
     canvas.addEventListener("pointerup", endTap);
-    canvas.addEventListener("pointercancel", function(){ downPos = null; lookId = null; if(PZ3D){ PZ3D.downPos = null; PZ3D.drag = null; } });
+    canvas.addEventListener("pointercancel", function(){ downPos = null; lookId = null; });
     canvas.addEventListener("wheel", function(e){ e.preventDefault(); }, {passive: false});
     function handleTap(px, py){
       var r = canvas.getBoundingClientRect();
@@ -2082,7 +2206,7 @@ function initScene(){
       var now = performance.now();
       var dt = Math.min(0.05, (now - prevT) / 1000); prevT = now;
       clock += dt;
-      if(!PZ3D && !inspecting){
+      if(!($("pz2d") && $("pz2d").classList.contains("open")) && !inspecting){
         var f = 0, s = 0;
         if(keys["KeyW"] || keys["ArrowUp"]) f += 1;
         if(keys["KeyS"] || keys["ArrowDown"]) f -= 1;
@@ -2143,7 +2267,7 @@ function initScene(){
         a.armR.rotation.x = Math.sin(clock * 1.3 + a.phase + 1.2) * 0.05;
         var dxp = PL.x - g.position.x, dzp = PL.z - g.position.z;
         var dp = Math.sqrt(dxp * dxp + dzp * dzp);
-        if(dp < 5 && !PZ3D){
+        if(dp < 5 && !($("pz2d") && $("pz2d").classList.contains("open"))){
           var target = Math.atan2(dxp, dzp);
           var cur = g.rotation.y;
           var diff = target - cur;
@@ -2372,7 +2496,6 @@ function doHint(){
 }
 
 /* ---------------- puzzles ---------------- */
-var PU = null;
 function mulberry32(a){ return function(){ a|=0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffleSeeded(arr, seed){
   var out = arr.slice(), rnd = mulberry32(seed);
@@ -2380,72 +2503,8 @@ function shuffleSeeded(arr, seed){
   return out;
 }
 function openPuzzle(idx){
-  if(typeof THREE !== "undefined" && SCENE && SCENE.scene && openPuzzle3D(idx)) return;
-  var c = C(); if(!c || !c.puzzles[idx]) return;
-  var pz = c.puzzles[idx];
-  var _gate = pzGate(idx);
-  if(!_gate.met){
-    openSheet("<div class='sheet-head'>🔒 Puzzle locked</div><p class='sheet-line'>" + esc(pzGateMsg(_gate)) + "</p><button class='btn' data-act='sheet-close'>Keep exploring</button>");
-    return;
-  }
-  PU = {idx: idx, seq: [], buckets: {}, pairs: {}, leftSel: -1, wheels: [], weigh: {}, slider: 0, tested: {}};
-  var mech = pz.mech || {};
-  var body = "";
-  if(mech.type === "order"){
-    var disp = shuffleSeeded(mech.items, S.caseId*100 + idx);
-    PU.disp = disp;
-    body = "<div class='sheet-sub'>Tap in order. Your sequence: <b id='pz-seq'></b></div>" +
-      disp.map(function(it, i){ return "<button class='btn ghost pz-item' data-pact='ord' data-i='" + i + "'>" + esc(it) + "</button>"; }).join(" ") +
-      "<div style='margin-top:10px'><button class='btn ghost' data-pact='pz-reset'>Reset</button></div>";
-  } else if(mech.type === "sort"){
-    body = "<div class='sheet-sub'>Tap a bucket under each item, then Check.</div>" +
-      mech.items.map(function(it, i){
-        return "<div class='sort-row'><span>" + esc(it) + "</span> " +
-          mech.buckets.map(function(b, bi){ return "<button class='btn ghost' data-pact='sort-b' data-i='" + i + "' data-b='" + bi + "'>" + esc(b) + "</button>"; }).join(" ") + "</div>";
-      }).join("") +
-      "<div style='margin-top:10px'><button class='btn' data-pact='pz-check'>Seal the bins</button></div>";
-  } else if(mech.type === "dial"){
-    PU.wheels = mech.answer.map(function(){ return 0; });
-    body = "<div class='sheet-sub'>Set the wheels, then Check.</div><div class='dial-row'>" +
-      mech.wheels.map(function(max, i){
-        return "<span class='wheel'><button class='btn ghost' data-pact='dial-up' data-i='" + i + "'>▲</button>" +
-          "<b id='wheel-" + i + "'>0</b>" +
-          "<button class='btn ghost' data-pact='dial-down' data-i='" + i + "'>▼</button></span>";
-      }).join("") + "</div>" +
-      "<div style='margin-top:10px'><button class='btn' data-pact='pz-check'>Try the lock</button></div>";
-  } else if(mech.type === "match" && mech.pairs){
-    body = "<div class='sheet-sub'>Tap one from the left, then its match on the right. Then Check.</div>" +
-      "<div class='match-cols'><div>" + mech.left.map(function(it, i){ return "<button class='btn ghost' data-pact='match-l' data-i='" + i + "'>" + esc(it) + "</button>"; }).join("") + "</div>" +
-      "<div>" + mech.right.map(function(it, i){ return "<button class='btn ghost' data-pact='match-r' data-i='" + i + "'>" + esc(it) + "</button>"; }).join("") + "</div></div>" +
-      "<div id='pz-pairs' class='sheet-sub'></div>" +
-      "<div style='margin-top:10px'><button class='btn' data-pact='pz-check'>Link the pairs</button></div>";
-  } else if(mech.type === "match"){
-    body = "<div class='sheet-sub'>Tap the person.</div>" +
-      mech.options.map(function(o){ return "<button class='btn ghost' data-pact='match-pick' data-o='" + esc(o) + "'>" + esc(o) + "</button>"; }).join(" ");
-  } else if(mech.type === "weigh"){
-    body = "<div class='sheet-sub'>Tap items to load them. Total: <b id='pz-total'>0.0 " + esc(mech.unit||"kg") + "</b> · Target: " + mech.target + " " + esc(mech.unit||"kg") + "</div>" +
-      mech.items.map(function(it, i){ return "<button class='btn ghost' data-pact='weigh-t' data-i='" + i + "'>" + esc(it.label) + " · " + it.w + " " + esc(mech.unit||"kg") + "</button>"; }).join(" ") +
-      "<div style='margin-top:10px'><button class='btn' data-pact='pz-check'>Pull the lever</button></div>";
-  } else if(mech.type === "slider"){
-    PU.slider = mech.min || 0;
-    body = "<div class='sheet-sub'>Drag to the value, then Check.</div>" +
-      "<input type='range' min='" + mech.min + "' max='" + mech.max + "' step='" + (mech.step||1) + "' value='" + PU.slider + "' id='pz-slider' style='width:100%'/>" +
-      "<div class='sheet-sub'>Value: <b id='pz-slider-val'>" + fmtSlider(mech, PU.slider) + "</b></div>" +
-      "<div style='margin-top:10px'><button class='btn' data-pact='pz-check'>Capture the frame</button></div>";
-  } else if(mech.type === "test"){
-    body = "<div class='sheet-sub'>Tap a vessel to test it.</div>" +
-      mech.items.map(function(it){ return "<button class='btn ghost' data-pact='test-v' data-o='" + esc(it) + "'>" + esc(it) + "</button>"; }).join(" ");
-  } else {
-    body = "<p class='sheet-line'>This puzzle station is not available in this build.</p>";
-  }
-  openSheet("<div class='sheet-head'>🧩 " + esc(pz.title) + "</div>" +
-    "<p class='sheet-line'>" + esc(pz.mech ? pz.mech.prompt : pz.hint) + "</p>" + body +
-    "<div id='pz-out'></div>" +
-    "<div style='margin-top:12px'><button class='btn ghost' data-act='speak-pz' data-idx='" + idx + "'>💡 Hint</button> " +
-    "<button class='btn ghost' data-act='sheet-close'>Close</button></div>");
-  if(S.puzz[idx]){
-    var out = $("pz-out"); if(out) out.innerHTML = "<p class='sheet-note'>✓ Already solved — " + esc(pz.done) + "</p>";
-  }
+  /* v4: every puzzle opens the full-screen 2D game — no 3D stations, no sheet quiz, no gate. */
+  return openPuzzle5(idx);
 }
 function fmtSlider(mech, v){
   if(mech.unit === "min02") return "02:" + (v < 10 ? "0" : "") + v;
@@ -2496,92 +2555,6 @@ function attemptPuzzle(idx, attempt){
   if(ok) puzzleSolved(idx); else puzzleWrong(idx);
   return ok;
 }
-function handlePact(el){
-  var pact = el.getAttribute("data-pact");
-  var c = C(); if(!c || !PU) return;
-  var pz = c.puzzles[PU.idx], mech = pz.mech || {};
-  if(pact === "ord"){
-    var i = +el.getAttribute("data-i");
-    if(el.disabled) return;
-    var item = PU.disp[i];
-    if(item !== mech.answer[PU.seq.length]){
-      puzzleWrong(PU.idx);
-      return;
-    }
-    el.disabled = true; el.style.opacity = "0.45";
-    PU.seq.push(item);
-    var sq = $("pz-seq"); if(sq) sq.textContent = PU.seq.join(" → ");
-    if(PU.seq.length === mech.answer.length){
-      attemptPuzzle(PU.idx, PU.seq);
-    }
-  } else if(pact === "pz-reset"){
-    PU.seq = [];
-    openPuzzle(PU.idx);
-  } else if(pact === "sort-b"){
-    var si = +el.getAttribute("data-i"), b = +el.getAttribute("data-b");
-    PU.buckets[si] = b;
-    el.parentElement.querySelectorAll("button").forEach(function(x){ x.style.borderColor = ""; });
-    el.style.borderColor = "var(--brass)";
-  } else if(pact === "dial-up" || pact === "dial-down"){
-    var di = +el.getAttribute("data-i");
-    var max = mech.wheels[di];
-    PU.wheels[di] = pact === "dial-up" ? (PU.wheels[di]+1) % max : (PU.wheels[di]-1+max) % max;
-    var wEl = $("wheel-"+di); if(wEl) wEl.textContent = PU.wheels[di];
-  } else if(pact === "match-l"){
-    PU.leftSel = +el.getAttribute("data-i");
-    document.querySelectorAll("[data-pact='match-l']").forEach(function(x){ x.style.borderColor = ""; });
-    el.style.borderColor = "var(--brass)";
-  } else if(pact === "match-r"){
-    if(PU.leftSel < 0){ pzOut("<p class='sheet-note'>Tap a left item first.</p>"); return; }
-    var ri = +el.getAttribute("data-i");
-    PU.pairs[PU.leftSel] = ri;
-    var pairsEl = $("pz-pairs");
-    if(pairsEl) pairsEl.innerHTML = Object.keys(PU.pairs).map(function(li){
-      return esc(mech.left[li]) + " → " + esc(mech.right[PU.pairs[li]]);
-    }).join(" · ");
-    PU.leftSel = -1;
-    document.querySelectorAll("[data-pact='match-l']").forEach(function(x){ x.style.borderColor = ""; });
-  } else if(pact === "match-pick"){
-    attemptPuzzle(PU.idx, el.getAttribute("data-o"));
-  } else if(pact === "weigh-t"){
-    var wi = +el.getAttribute("data-i");
-    if(PU.weigh[wi]){ delete PU.weigh[wi]; el.style.borderColor = ""; }
-    else { PU.weigh[wi] = true; el.style.borderColor = "var(--brass)"; }
-    var tot = 0; Object.keys(PU.weigh).forEach(function(k){ tot += mech.items[k].w; });
-    var tEl = $("pz-total"); if(tEl) tEl.textContent = tot.toFixed(1) + " " + (mech.unit||"kg");
-  } else if(pact === "test-v"){
-    var v = el.getAttribute("data-o");
-    if(v === mech.answer){ attemptPuzzle(PU.idx, v); }
-    else { el.disabled = true; el.style.opacity = "0.45"; pzOut("<p class='sheet-note'>Clean — that vessel tests negative. Keep testing.</p>"); }
-  } else if(pact === "pz-check"){
-    if(mech.type === "sort"){
-      var arr = mech.items.map(function(_, i){ return PU.buckets[i] === undefined ? -1 : PU.buckets[i]; });
-      var good = JSON.stringify(arr) === JSON.stringify(mech.answer);
-      if(good){ attemptPuzzle(PU.idx, arr); }
-      else {
-        mech.items.forEach(function(_, i){
-          if(PU.buckets[i] !== mech.answer[i]){
-            delete PU.buckets[i];
-            document.querySelectorAll("[data-pact='sort-b'][data-i='" + i + "']").forEach(function(x){ x.style.borderColor = ""; });
-          }
-        });
-        puzzleWrong(PU.idx);
-        pzOut("<p class='sheet-note'>✗ " + esc(C().puzzles[PU.idx].wrong) + " — the wrong items bounced back. Try again.</p>");
-      }
-    } else if(mech.type === "dial"){
-      attemptPuzzle(PU.idx, PU.wheels.slice());
-    } else if(mech.type === "match" && mech.pairs){
-      var prs = Object.keys(PU.pairs).map(function(li){ return [+li, PU.pairs[li]]; });
-      attemptPuzzle(PU.idx, prs);
-    } else if(mech.type === "weigh"){
-      var sel = Object.keys(PU.weigh).map(function(k){ return +k; }).sort(function(a,b){ return a-b; });
-      attemptPuzzle(PU.idx, sel);
-    } else if(mech.type === "slider"){
-      var sl = $("pz-slider"); if(sl) attemptPuzzle(PU.idx, +sl.value);
-    }
-  }
-}
-
 /* ---------------- solve (visual) ---------------- */
 function startSolve(){
   var c = C(); if(!c) return;
@@ -2757,7 +2730,7 @@ function openBrief(id){
   showView("view-brief");
 }
 function enterCase(){
-  closePuzzle3D();
+  closePuzzle5();
   var c = C(); if(!c) return;
   if(!S.name) S.name = "Player";
   if(!S.role) S.role = "detective";
@@ -2839,7 +2812,7 @@ function retry3d(){
   }
 }
 function leaveCase(){
-  closePuzzle3D();
+  closePuzzle5();
   if(S.timer){ clearInterval(S.timer); S.timer = null; }
   stopScene(); liveStop(); closeSheet();
   S.entered = false; S.solveMode = false;
@@ -2897,15 +2870,6 @@ document.addEventListener("click", function(e){
     else if(act === "mute"){ toggleMute(); }
     else if(act === "stop-voice"){ stopVoice(); }
     else if(act === "speak-hint"){ speak(t.getAttribute("data-text")); }
-    else if(act === "speak-pz"){
-      var pz = C().puzzles[+t.getAttribute("data-idx")];
-      if(pz){ openSheet("<div class='sheet-head'>💡 Puzzle hint</div><p class='sheet-line'>" + esc(pz.hint) + "</p><button class='btn' data-act='sheet-close'>Close</button>", true); speak(pz.hint); }
-    }
-    else if(act === "pz-hint"){
-      var pz2 = C().puzzles[+t.getAttribute("data-idx")];
-      if(pz2){ pzReadout("💡 " + pz2.hint); speak(pz2.hint); }
-    }
-    else if(act === "pz-close"){ closePuzzle3D(); }
     else if(act === "solve-who"){ pickWho(t.getAttribute("data-key")); }
     else if(act === "solve-how"){ pickHow(t.getAttribute("data-v")); }
     else if(act === "solve-where"){ pickWhere(t.getAttribute("data-v")); }
@@ -2919,15 +2883,8 @@ document.addEventListener("click", function(e){
     else if(act === "fp-interact"){ if(window.__LG3D_SCENE__ && window.__LG3D_SCENE__.fpInteract) window.__LG3D_SCENE__.fpInteract(); }
     return;
   }
-  var p = e.target.closest("[data-pact]");
-  if(p){ handlePact(p); }
 });
 document.addEventListener("input", function(e){
-  if(e.target && e.target.id === "pz-slider"){
-    var c = C(); if(!c || !PU) return;
-    var mech = c.puzzles[PU.idx].mech || {};
-    var vEl = $("pz-slider-val"); if(vEl) vEl.textContent = fmtSlider(mech, +e.target.value);
-  }
   if(e.target && e.target.id === "player-name"){ S.name = e.target.value.trim(); }
   if(e.target && e.target.id === "player-role"){ S.role = e.target.value; }
   if(e.target && e.target.id === "team-size"){ S.size = parseInt(e.target.value, 10) || 3; }
@@ -2961,743 +2918,1220 @@ window.__LG3D__ = {
   mode: function(){ return window.__LG3D_MODE__ || "list"; }
 };
 
-/* ================= PART 4: 3D PUZZLE STATIONS (2026-10-29 refinement) =================
-   Puzzles are 3D interactions inside the room, NOT 2D panels. Each mechanic gets a
-   physical station: tap 3D objects to pick/sort/match/weigh, drag a 3D dial to turn
-   it, drag a 3D slider knob. The 2D sheet UI in openPuzzle() remains ONLY as the
-   fallback when Three.js/WebGL is unavailable (list mode) so the game stays playable.
-   Titles, hints, done/wrong text and clue unlocks are unchanged — attemptPuzzle()
-   is the single win-condition for both paths. */
-var PZ3D = null;
-function pzReadout(txt){ var o = $("pz-readout"); if(o) o.textContent = txt; }
-function pzTex(text, opts){
-  opts = opts || {};
-  var cv = document.createElement("canvas"); cv.width = opts.w || 512; cv.height = opts.h || 256;
-  var ctx = cv.getContext("2d");
-  ctx.fillStyle = opts.bg || "#1c1a16"; ctx.fillRect(0, 0, cv.width, cv.height);
-  ctx.strokeStyle = opts.border || "#c9a227"; ctx.lineWidth = 6; ctx.strokeRect(6, 6, cv.width - 12, cv.height - 12);
-  var words = String(text).split(/\s+/), lines = [], cur = "";
-  var maxChars = opts.maxChars || 22;
-  words.forEach(function(w){
-    if((cur + " " + w).trim().length > maxChars && cur){ lines.push(cur); cur = w; }
-    else cur = (cur + " " + w).trim();
-  });
-  if(cur) lines.push(cur);
-  lines = lines.slice(0, opts.maxLines || 4);
-  ctx.fillStyle = opts.fg || "#f5e9c8";
-  ctx.font = "bold " + (opts.font || 44) + "px sans-serif";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  var lh = (opts.font || 44) + 12, y0 = cv.height / 2 - (lines.length - 1) * lh / 2;
-  lines.forEach(function(l, i){ ctx.fillText(l, cv.width / 2, y0 + i * lh); });
-  var tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; return tex;
-}
-function pzPlane(text, w, h, opts){
-  return new THREE.Mesh(new THREE.PlaneGeometry(w, h),
-    new THREE.MeshBasicMaterial({map: pzTex(text, opts), transparent: true}));
-}
-function pzPlaque(text, w, h, opts){
-  var g = new THREE.Group();
-  var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.18),
-    new THREE.MeshStandardMaterial({color: (opts && opts.color) || 0x2a2118}));
-  g.add(b);
-  var p = pzPlane(text, w * 0.92, h * 0.86, opts);
-  p.position.z = 0.1; g.add(p);
-  g.userData.box = b; g.userData.plane = p;
-  return g;
-}
-function pzTint(g, hex){ if(g.userData.box) g.userData.box.material.color.setHex(hex); }
-function pzShake(g){
-  var bx = g.position.x;
-  [-0.09, 0.09, -0.06, 0.06, 0].forEach(function(dx, i){
-    setTimeout(function(){ g.position.x = bx + dx; }, i * 70);
-  });
-}
-function pzStationBase(){
-  var g = new THREE.Group();
-  var floor = new THREE.Mesh(new THREE.CircleGeometry(6.5, 40),
-    new THREE.MeshStandardMaterial({color: 0x191512}));
-  floor.rotation.x = -Math.PI / 2; g.add(floor);
-  var table = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.25, 3.6),
-    new THREE.MeshStandardMaterial({color: 0x3a2a18}));
-  table.position.set(0, 0.95, 0); g.add(table);
-  [[-3.8, -1.5], [3.8, -1.5], [-3.8, 1.5], [3.8, 1.5]].forEach(function(l){
-    var leg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.95, 0.25),
-      new THREE.MeshStandardMaterial({color: 0x241a10}));
-    leg.position.set(l[0], 0.47, l[1]); g.add(leg);
-  });
-  return g;
-}
-function pzCheckPlaque(){
-  var p = pzPlaque("✓ CHECK", 1.5, 0.6, {font: 52});
-  p.position.set(0, 3.15, 0); p.userData.pzkind = "check";
-  return p;
-}
-function pzAutoClose(idx){
-  setTimeout(function(){ if(PZ3D && PZ3D.idx === idx) closePuzzle3D(); }, 1600);
-}
-function pzSolvedMsg(idx){
-  var pz = C().puzzles[idx];
-  return "✓ Already solved — " + (pz ? pz.done : "");
-}
-/* ============ v3 PUZZLES: tactile, multi-step, no CHECK plaque ============
-   Every station is a physical mechanism, not a quiz panel:
-   - CLUE GATE: the station refuses manipulation until the player has examined
-     the clue evidence that holds the answer pieces (1 source Normal, 2 Hard,
-     3 God — same data, tier-scaled depth). No brute-force without exploring.
-   - TWO-TAP MANIPULATION: pick an object up, place it somewhere. Wrong
-     placements bounce back immediately with shake + visible feedback.
-   - PHYSICAL CONFIRM: try the lock, pull the lever, capture the frame —
-     part of the mechanism, never a generic CHECK button.
-   - VISIBLE FEEDBACK: pzFlash shows big ✓/✗ in the 3D view; readouts show
-     live progress (placed x/y). Same puzzle data/titles/hints/done-wrong
-     text/solutions/clue unlocks — only the interaction and depth change. */
-function pzGate(idx){
-  var c = C(); if(!c || !c.puzzles[idx]) return {met: true, sources: [], found: 0, total: 0};
-  var tier = S.caseId <= 12 ? 1 : S.caseId <= 22 ? 2 : 3;
-  var ev = c.ev || [];
-  var seen = {}, srcs = [];
-  for(var k = 0; k < tier; k++){
-    var i = (idx * 3 + k * 4) % ev.length;
-    if(!seen[i]){ seen[i] = true; srcs.push(ev[i]); }
-  }
-  var found = 0; srcs.forEach(function(e){ if(S.ev[e.id]) found++; });
-  return {met: found === srcs.length, sources: srcs, found: found, total: srcs.length};
-}
-function pzGateMsg(g){
-  var names = g.sources.map(function(e){ return e.label; }).join(" + ");
-  return "🔒 You need the details in: " + names + " (" + g.found + "/" + g.total + " found). Keep exploring — examine those clues first.";
-}
+/* ============ v5 PUZZLES: forensic terminal — Calibrate → Pin → Verify ============
+   Round 5 replaces the round-4 casual 2D games with the user's own spec:
+   every puzzle is a tactile, visual FORENSIC HARDWARE SIMULATION.
+   NEVER a text quiz, NEVER bare multiple-choice, NEVER a text-only list.
+   Every puzzle runs the same 3-stage loop:
+     STAGE 1 — CALIBRATE: manipulate a physical instrument (timeline scrubber,
+       optical overlay aligner, tare scale, sensor sweep, X-ray gantry, loupe
+       scan, circuit breaker panel) and LOCK the calibration. Wrong calibration
+       = no nodes, clear crimson feedback. Nodes stay hidden/inert until the
+       lock succeeds.
+     STAGE 2 — PIN THE ANOMALY: click directly on visual hotspots / nodes
+       that only became interactive after calibration. A node pins only when
+       its state is the true finding; wrong pins give visible feedback.
+     STAGE 3 — VERIFY: a final lock action, disabled until a real anomaly is
+       pinned. It confirms the pinned finding (never a standalone answer
+       button): emerald VERIFIED state + the forensic takeaway note, which IS
+       the puzzle's existing clue unlock. attemptPuzzle() stays the single
+       win-condition; the final case solve keeps its min-evidence gate.
+   Same puzzle data / titles / hints / done-wrong text / clue unlocks as v4.
+   NO puzzle gate: every puzzle opens and plays at zero evidence (v3's lock
+   blocked live play). Difficulty scales with tier inside the framework:
+   tighter calibration tolerance, more noise nodes, later nudges on Hard/God.
+   Aesthetic: obsidian #0a0b0e, amber #d4a853, cyan #2dd4bf, crimson
+   #ef4444, emerald #10b981; Playfair Display headers, Inter body,
+   JetBrains Mono telemetry; layered inline SVGs, scanlines, crosshairs,
+   CRT noise, glowing nodes, all driven by live JS state. */
+var PZ5 = null;
 function pzFlash(txt, ok){
   var f = $("pz-flash"); if(!f) return;
   f.textContent = txt; f.className = ok ? "show ok" : "show bad";
   if(f._t) clearTimeout(f._t);
   f._t = setTimeout(function(){ f.className = ""; }, 2400);
 }
-function fpHash(str){
+/* Fingerprint drawing (same ring model as v3/v4, renamed). */
+function pz5FpHash(str){
   var h = 5381;
   for(var i = 0; i < str.length; i++){ h = ((h << 5) + h + str.charCodeAt(i)) | 0; }
   return h >>> 0;
 }
-function fpParams(seed){
-  var h = fpHash(seed);
+function pz5FpParams(seed){
+  var h = pz5FpHash(seed);
   return [h % 3, 6 + (h >> 3) % 5, 30 + (h >> 6) % 60, 30 + (h >> 10) % 60, (h >> 14) % 4];
 }
-function fpTex(seed){
-  var p = fpParams(seed);
-  var cv = document.createElement("canvas"); cv.width = 256; cv.height = 256;
-  var ctx = cv.getContext("2d");
-  ctx.fillStyle = "#1c1a16"; ctx.fillRect(0, 0, 256, 256);
-  ctx.strokeStyle = "#c9b898"; ctx.lineWidth = 3;
-  var cx = 60 + p[2], cy = 60 + p[3];
-  for(var r = 0; r < p[1]; r++){
-    ctx.beginPath();
-    var rad = 12 + r * 11;
-    var a0 = p[0] === 0 ? 0 : (p[0] === 1 ? 0.4 : -0.4);
-    ctx.arc(cx, cy, rad, a0, Math.PI * 2 - a0 * 0.5);
-    ctx.stroke();
+function pz5DrawPrint(cv, seed){
+  var p = pz5FpParams(seed);
+  var ctx = cv.getContext("2d"); if(!ctx) return;
+  ctx.fillStyle = "#0a0b0e"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.strokeStyle = "#2dd4bf"; ctx.lineWidth = 3;
+  var cx = 30 + p[2] * 0.55, cy = 30 + p[3] * 0.55, sc = cv.width / 256;
+  ctx.beginPath();
+  for(var r = 12; r < 110; r += 12){
+    ctx.moveTo((cx + r) * sc, cy * sc);
+    ctx.arc(cx * sc, cy * sc, r * sc, 0, Math.PI * 2);
   }
-  ctx.fillStyle = "#c9a227"; ctx.font = "bold 20px sans-serif"; ctx.textAlign = "center";
-  ctx.fillText("PRINT", 128, 240);
-  var tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; return tx;
+  ctx.stroke();
+  ctx.strokeStyle = "#d4a853"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx * sc, cy * sc);
+  ctx.lineTo((cx + p[4] * 14) * sc, (cy + 26) * sc); ctx.stroke();
 }
-function pzGateCheck(idx){
-  var g = pzGate(idx);
-  if(!g.met){ pzReadout(pzGateMsg(g)); return false; }
-  return true;
+/* ---------------- shell + feedback ---------------- */
+function pz5El(id){ return document.getElementById(id); }
+function pz5Say(msg, ok){
+  var f = pz5El("pz2d-feedback"); if(!f) return;
+  f.textContent = msg; f.className = ok === true ? "ok" : ok === false ? "bad" : "";
 }
-/* ---- ORDER: pick a tile up, place it on the rail. Wrong tile bounces back. ---- */
-function buildOrderStation(mech, idx){
-  var g = pzStationBase();
-  var disp = shuffleSeeded(mech.items, S.caseId * 100 + idx);
-  var st = {seq: [], picked: {}, held: -1};
-  var boxes = [], slots = [];
-  var n = disp.length, w = Math.min(0.95, 7.2 / n);
-  disp.forEach(function(it, i){
-    var b = pzPlaque(it, w, 0.85, {font: 40, maxChars: 12});
-    b.position.set(-3.6 + (i + 0.5) * (7.2 / n), 1.55, 0.9);
-    b.userData.pzkind = "ord-tile"; b.userData.i = i; b.userData.label = it;
-    b.userData.home = b.position.clone();
-    g.add(b); boxes.push(b);
-  });
-  for(var s = 0; s < mech.answer.length; s++){
-    var sl = new THREE.Mesh(new THREE.BoxGeometry(7.2 / mech.answer.length - 0.15, 0.1, 0.55),
-      new THREE.MeshStandardMaterial({color: s === 0 ? 0xc9a227 : 0x2a2118}));
-    sl.position.set(-3.6 + (s + 0.5) * (7.2 / mech.answer.length), 1.12, -1.1);
-    sl.userData.pzkind = "ord-slot"; sl.userData.s = s;
-    g.add(sl); slots.push(sl);
-  }
-  var rail = new THREE.Mesh(new THREE.BoxGeometry(7.4, 0.12, 0.5),
-    new THREE.MeshStandardMaterial({color: 0x8a6a20}));
-  rail.position.set(0, 1.0, -1.1); g.add(rail);
-  function readout(){ pzReadout("Sequence: " + (st.seq.length ? st.seq.join(" → ") : "—") + "  (" + st.seq.length + "/" + mech.answer.length + ") — tap a tile to pick it up, tap the rail to place it."); }
-  function hold(i){
-    if(st.held >= 0 && st.held !== i){
-      var prev = boxes[st.held];
-      if(!st.picked[st.held]){ prev.position.copy(prev.userData.home); pzTint(prev, 0x2a2118); }
-    }
-    st.held = i;
-    var b = boxes[i];
-    b.position.y = b.userData.home.y + 0.45; pzTint(b, 0xc9a227);
-    readout();
-  }
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind === "ord-tile"){
-        var b = boxes[ud.i];
-        if(st.picked[ud.i]) return;
-        if(st.held === ud.i){ st.held = -1; b.position.copy(b.userData.home); pzTint(b, 0x2a2118); readout(); return; }
-        hold(ud.i); return;
-      }
-      if(ud.pzkind === "ord-slot"){
-        if(st.held < 0){ pzReadout("Pick a tile up first, then tap the rail to place it."); return; }
-        var held = boxes[st.held], label = held.userData.label;
-        if(label !== mech.answer[st.seq.length]){
-          pzShake(held); puzzleWrong(idx);
-          held.position.copy(held.userData.home); pzTint(held, 0x2a2118); st.held = -1;
-          readout(); return;
-        }
-        st.picked[st.held] = true; st.seq.push(label);
-        var slotPos = -3.6 + (st.seq.length - 0.5) * (7.2 / mech.answer.length);
-        held.position.set(slotPos, 1.35, -1.1); pzTint(held, 0x2e5a2e);
-        st.held = -1;
-        if(st.seq.length < slots.length) slots[st.seq.length].material.color.setHex(0xc9a227);
-        readout();
-        if(st.seq.length === mech.answer.length && attemptPuzzle(idx, st.seq)) pzAutoClose(idx);
-      }
-    },
-    dragStart: function(){}, dragMove: function(){}, dragEnd: function(){},
-    submit: function(){ return false; }, readout: readout};
+function pz5Tone(kind){
+  try{
+    if(kind === "pick") sfxTone(660, 0.06, "sine", 0.08);
+    else if(kind === "place") sfxTone(520, 0.09, "sine", 0.1);
+    else if(kind === "good"){ sfxTone(740, 0.1, "sine", 0.1); sfxTone(980, 0.12, "sine", 0.1, 0.09); }
+    else if(kind === "wrong") sfxTone(160, 0.18, "square", 0.07);
+    else if(kind === "solve"){ [523, 659, 784, 1046].forEach(function(fr, i){ sfxTone(fr, 0.14, "sine", 0.11, i * 0.1); }); }
+  }catch(e){}
 }
-/* ---- SORT: pick a crate up, drop it in a bin. Wrong bin bounces it back. ---- */
-function buildSortStation(mech, idx){
-  var g = pzStationBase();
-  var st = {held: -1, buckets: {}};
-  var crates = [], bins = [];
-  var n = mech.items.length, cols = Math.min(4, n);
-  mech.items.forEach(function(it, i){
-    var cg = new THREE.Group();
-    var box = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.62),
-      new THREE.MeshStandardMaterial({color: 0x6a4a22}));
-    cg.add(box);
-    var lab = pzPlane(it, 1.15, 0.42, {font: 34, maxChars: 14, h: 128});
-    lab.position.y = 0.55; cg.add(lab);
-    var col = i % cols, row = Math.floor(i / cols);
-    cg.position.set((col - (cols - 1) / 2) * 1.5, 1.38, 0.7 + row * 0.7);
-    cg.userData.pzkind = "sort-crate"; cg.userData.i = i; cg.userData.box = box;
-    cg.userData.home = cg.position.clone();
-    g.add(cg); crates.push(cg);
-  });
-  mech.buckets.forEach(function(bname, bi){
-    var bin = new THREE.Group();
-    var base = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 1.6),
-      new THREE.MeshStandardMaterial({color: 0x4a3a22}));
-    base.position.y = 1.16; bin.add(base);
-    var back = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 0.15),
-      new THREE.MeshStandardMaterial({color: 0x2a2118}));
-    back.position.set(0, 1.6, -0.75); bin.add(back);
-    var lid = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.08, 1.6),
-      new THREE.MeshStandardMaterial({color: 0x6a4a22}));
-    lid.position.set(0, 2.1, -0.75); bin.add(lid);
-    var lab = pzPlane(bname, 2.0, 0.5, {font: 40, maxChars: 18});
-    lab.position.set(0, 2.35, -0.7); bin.add(lab);
-    bin.position.set(bi === 0 ? -1.9 : 1.9, 0, -0.9);
-    bin.userData.pzkind = "sort-bin"; bin.userData.bi = bi; bin.userData.count = 0; bin.userData.lid = lid;
-    g.add(bin); bins.push(bin);
-  });
-  function readout(){
-    var placed = Object.keys(st.buckets).length;
-    pzReadout("Sorted: " + placed + "/" + n + (st.held >= 0 ? " — holding: " + mech.items[st.held] : " — tap a crate to pick it up, tap a bin to drop it."));
-  }
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind === "sort-crate"){
-        var cg = crates[ud.i];
-        if(st.buckets[ud.i] !== undefined) return;
-        if(st.held === ud.i){ st.held = -1; cg.position.y = cg.userData.home.y; pzTint(cg, 0x6a4a22); readout(); return; }
-        if(st.held >= 0){ var prev = crates[st.held]; prev.position.y = prev.userData.home.y; pzTint(prev, 0x6a4a22); }
-        st.held = ud.i; cg.position.y = cg.userData.home.y + 0.4; pzTint(cg, 0xc9a227);
-        readout(); return;
-      }
-      if(ud.pzkind === "sort-bin" && st.held >= 0){
-        var bin = bins[ud.bi], item = st.held;
-        if(mech.answer[item] !== ud.bi){
-          var bad = crates[item];
-          pzShake(bad); puzzleWrong(idx);
-          bad.position.copy(bad.userData.home); bad.position.y = bad.userData.home.y; pzTint(bad, 0x6a4a22);
-          st.held = -1; readout(); return;
-        }
-        var k = bin.userData.count++;
-        var cg2 = crates[item];
-        st.buckets[item] = ud.bi;
-        cg2.position.set(bin.position.x - 0.7 + (k % 3) * 0.7, 1.56, -1.25 + Math.floor(k / 3) * 0.7);
-        cg2.scale.set(0.9, 0.9, 0.9); pzTint(cg2, 0x2e5a2e);
-        st.held = -1; readout();
-        if(Object.keys(st.buckets).length === n){
-          var att = mech.items.map(function(_, i){ return st.buckets[i]; });
-          if(attemptPuzzle(idx, att)){
-            bins.forEach(function(bn){ bn.userData.lid.rotation.x = -1.9; bn.userData.lid.position.z = -1.4; });
-            pzAutoClose(idx);
-          }
-        }
-      }
-    },
-    dragStart: function(){}, dragMove: function(){}, dragEnd: function(){},
-    submit: function(){ return false; },
-    readout: readout};
+function pz5Progress(done, total, label){
+  var fill = pz5El("pz2d-fill"), cnt = pz5El("pz2d-count");
+  if(fill) fill.style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+  if(cnt) cnt.textContent = label || (done + " / " + total);
 }
-/* ---- DIAL: turn the wheels, then TRY THE LOCK (the lock itself, not CHECK). ---- */
-function buildDialStation(mech, idx){
-  var g = pzStationBase();
-  var st = {wheels: mech.answer.map(function(){ return 0; }), drag: null};
-  var wheels = [];
-  var n = mech.wheels.length;
-  mech.wheels.forEach(function(max, i){
-    var wg = new THREE.Group();
-    var cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.35, 24),
-      new THREE.MeshStandardMaterial({color: 0x8a6a20, metalness: 0.4, roughness: 0.5}));
-    cyl.rotation.x = Math.PI / 2; wg.add(cyl);
-    var num = pzPlane("0", 0.7, 0.7, {font: 90, bg: "#111111", w: 256, h: 256});
-    num.position.z = 0.19; wg.add(num);
-    wg.position.set(-(n - 1) * 0.85 + i * 1.7, 1.7, 0);
-    wg.userData.pzkind = "dial"; wg.userData.i = i; wg.userData.cyl = cyl; wg.userData.num = num;
-    g.add(wg); wheels.push(wg);
-  });
-  var lock = new THREE.Group();
-  var lbody = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 0.3),
-    new THREE.MeshStandardMaterial({color: 0x8a8a8a, metalness: 0.7, roughness: 0.35}));
-  lbody.position.y = 0; lock.add(lbody);
-  var shackle = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.07, 10, 20, Math.PI),
-    new THREE.MeshStandardMaterial({color: 0xb8bcc2, metalness: 0.9, roughness: 0.25}));
-  shackle.position.y = 0.45; lock.add(shackle);
-  var llabel = pzPlane("TRY THE LOCK", 1.5, 0.4, {font: 44});
-  llabel.position.set(0, -0.05, 0.17); lock.add(llabel);
-  lock.position.set(0, 3.1, 0);
-  lock.userData.pzkind = "dial-lock"; lock.userData.shackle = shackle;
-  g.add(lock);
-  function fmt(){
-    if(mech.fmt === "time" && st.wheels.length === 4)
-      return "" + st.wheels[0] + st.wheels[1] + ":" + st.wheels[2] + st.wheels[3];
-    return st.wheels.join("");
-  }
-  function setWheel(i, v){
-    var max = mech.wheels[i];
-    v = ((v % max) + max) % max;
-    st.wheels[i] = v;
-    wheels[i].userData.cyl.rotation.y = v * 0.5;
-    wheels[i].userData.num.material.map = pzTex(String(v), {font: 90, bg: "#111111", w: 256, h: 256});
-    wheels[i].userData.num.material.needsUpdate = true;
-    pzReadout("Dial: " + fmt() + " — set every wheel, then tap TRY THE LOCK.");
-  }
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind === "dial-lock"){
-        var ok = JSON.stringify(st.wheels.slice()) === JSON.stringify(mech.answer);
-        if(ok){
-          shackle.position.y = 0.85;
-          if(attemptPuzzle(idx, st.wheels.slice())) pzAutoClose(idx);
-        } else {
-          pzShake(lock); puzzleWrong(idx);
-          pzReadout("✗ " + C().puzzles[idx].wrong + " — the lock stays shut. Dial: " + fmt());
-        }
-        return;
-      }
-      if(ud.pzkind === "dial") setWheel(ud.i, st.wheels[ud.i] + 1);
-    },
-    dragStart: function(ud, info){ st.drag = {i: ud.i, startVal: st.wheels[ud.i], startY: info.clientY}; },
-    dragMove: function(ud, info){
-      if(!st.drag) return;
-      var steps = Math.round((st.drag.startY - info.clientY) / 30);
-      setWheel(st.drag.i, st.drag.startVal + steps);
-    },
-    dragEnd: function(){ st.drag = null; },
-    submit: function(){ return false; },
-    readout: function(){ pzReadout("Dial: " + fmt()); }};
+function pz5Wrong(msg){
+  if(!PZ5) return;
+  PZ5.wrongs++;
+  pz5Say("✗ " + msg, false);
+  pz5Tone("wrong");
+  var b = pz5El("pz2d-board");
+  if(b){ b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); }
+  if(PZ5.wrongs >= pz5NudgeAfter()) pz5ShowNudge();
+  /* Keep the S2 view in sync when a wrong move changed state (link deselect,
+     scale pan cleared). Feedback lives outside the board, so it survives. */
+  if(PZ5.stage === 2) pz5RenderS2();
 }
-/* ---- MATCH: tap a left plaque then its right match; pairs lock with a brass bar. ---- */
-function buildMatchStation(mech, idx){
-  var g = pzStationBase();
-  var st = {leftSel: -1, locked: {}};
-  var left = [], right = [];
-  var nL = mech.left.length, nR = mech.right.length;
-  var spL = Math.min(0.85, 4.2 / Math.max(1, nL)), spR = Math.min(0.85, 4.2 / Math.max(1, nR));
-  mech.left.forEach(function(it, i){
-    var b = pzPlaque(it, 2.6, 0.7, {font: 30, maxChars: 26});
-    b.position.set(-2.3, 1.9 + ((nL - 1) / 2 - i) * spL, 0);
-    b.userData.pzkind = "match-l"; b.userData.i = i;
-    g.add(b); left.push(b);
-  });
-  mech.right.forEach(function(it, i){
-    var b = pzPlaque(it, 2.6, 0.7, {font: 30, maxChars: 26});
-    b.position.set(2.3, 1.9 + ((nR - 1) / 2 - i) * spR, 0);
-    b.userData.pzkind = "match-r"; b.userData.i = i;
-    g.add(b); right.push(b);
-  });
-  function readout(){ pzReadout("Matched: " + Object.keys(st.locked).length + "/" + mech.pairs.length + " — tap a left item, then its match on the right."); }
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind === "match-l"){
-        if(st.locked["l" + ud.i]) return;
-        if(st.leftSel >= 0) pzTint(left[st.leftSel], 0x2a2118);
-        st.leftSel = ud.i; pzTint(left[ud.i], 0xc9a227);
-        readout(); return;
-      }
-      if(ud.pzkind === "match-r"){
-        if(st.leftSel < 0 || st.locked["l" + st.leftSel]) return;
-        var li = st.leftSel, ri = ud.i;
-        var ok = mech.pairs.some(function(pr){ return pr[0] === li && pr[1] === ri; });
-        if(ok){
-          st.locked["l" + li] = ri;
-          pzTint(left[li], 0x2e5a2e); pzTint(right[ri], 0x2e5a2e);
-          left[li].position.x = -1.9; right[ri].position.x = 1.9;
-          var bar = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.08, 0.08),
-            new THREE.MeshStandardMaterial({color: 0xc9a227, metalness: 0.6, roughness: 0.3}));
-          bar.position.set(0, (left[li].position.y + right[ri].position.y) / 2, 0);
-          g.add(bar);
-          try{ sfxTone(520, 0.09, "sine", 0.08); }catch(e){}
-          st.leftSel = -1; readout();
-          if(Object.keys(st.locked).length === mech.pairs.length){
-            var pairs = Object.keys(st.locked).map(function(k){ return [+k.slice(1), st.locked[k]]; });
-            if(attemptPuzzle(idx, pairs)) pzAutoClose(idx);
-          }
-        } else {
-          pzShake(left[li]); pzShake(right[ri]);
-          pzTint(left[li], 0x2a2118);
-          st.leftSel = -1; puzzleWrong(idx); pzReadout("✗ " + C().puzzles[idx].wrong);
-        }
-      }
-    },
-    dragStart: function(){}, dragMove: function(){}, dragEnd: function(){},
-    submit: function(){ return false; }, readout: readout};
-}
-/* ---- MATCH-PICK: compare real fingerprint prints, then place the match. ---- */
-function buildMatchPickStation(mech, idx){
-  var g = pzStationBase();
-  var st = {examined: {}, placed: null};
-  var plaques = [];
-  var n = mech.options.length;
-  var refKey = fpParams(mech.answer).join(",");
-  var tokens = {};
-  tokens[mech.answer] = refKey;
-  mech.options.forEach(function(o){
-    if(o === mech.answer) return;
-    var k = fpParams(o).join(","), salt = 0;
-    while(k === refKey && salt < 8){ salt++; k = fpParams(o + "~" + salt).join(","); }
-    tokens[o] = k;
-  });
-  var ref = new THREE.Group();
-  var refBox = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 0.18),
-    new THREE.MeshStandardMaterial({color: 0x2a2118}));
-  ref.add(refBox);
-  var refPrint = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8),
-    new THREE.MeshStandardMaterial({map: fpTex(mech.answer), roughness: 0.8}));
-  refPrint.position.set(-0.7, 0, 0.1); ref.add(refPrint);
-  var refLab = pzPlane("REFERENCE PRINT", 1.3, 0.5, {font: 40, maxChars: 16});
-  refLab.position.set(0.55, 0, 0.1); ref.add(refLab);
-  ref.position.set(0, 2.9, 0);
-  g.add(ref);
-  mech.options.forEach(function(o, i){
-    var b = pzPlaque(o, 2.2, 0.8, {font: 34, maxChars: 22});
-    b.position.set(-(n - 1) * 1.25 + i * 2.5, 1.7, 0);
-    b.userData.pzkind = "pick-plaque"; b.userData.value = o;
-    var pr = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.62),
-      new THREE.MeshStandardMaterial({map: fpTex(o), roughness: 0.8}));
-    pr.position.set(0, 0, 0.12); pr.visible = false;
-    b.add(pr); b.userData.print = pr;
-    g.add(b); plaques.push(b);
-  });
-  var need = Math.min(2, n);
-  function readout(){
-    var ex = Object.keys(st.examined).length;
-    pzReadout("Examined: " + ex + "/" + n + " prints — tap a plaque to examine its print, compare with the reference, then tap it again to place it. (Need " + need + " examined before placing.)");
+function pz5Tier(){ return S.caseId <= 12 ? 1 : S.caseId <= 22 ? 2 : 3; }
+function pz5NudgeAfter(){ var t = pz5Tier(); return t === 1 ? 2 : t === 2 ? 3 : 4; }
+function pz5Tol(){ var t = pz5Tier(); return t === 1 ? 0.15 : t === 2 ? 0.08 : 0.04; }
+function pz5NoiseCount(){ var t = pz5Tier(); return t === 1 ? 0 : t === 2 ? 2 : 4; }
+/* ---------------- type + instrument mapping ---------------- */
+/* 11 puzzle types, assigned from the puzzle's own data (same as v4). */
+function pz5Type(pz, idx){
+  var m = pz.mech || {};
+  if(m.type === "order"){
+    if(/spell|letter|cipher/i.test(m.prompt || "")) return "cipher";
+    return "timeline";
   }
-  return {group: g, solved: !!S.puzz[idx], tokens: tokens, refKey: refKey,
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind !== "pick-plaque") return;
-      var b = plaques.filter(function(p){ return p.userData.value === ud.value; })[0];
-      if(!b) return;
-      if(!st.examined[ud.value]){
-        st.examined[ud.value] = true;
-        b.userData.print.visible = true;
-        pzTint(b, 0xc9a227);
-        pzReadout("Examined: " + ud.value + " — compare this print with the reference above.");
-        return;
-      }
-      if(Object.keys(st.examined).length < need){
-        pzReadout("Compare at least " + need + " prints first — tap another plaque to examine it.");
-        return;
-      }
-      if(ud.value === mech.answer){
-        b.position.y = 2.6; pzTint(b, 0x2e5a2e);
-        if(attemptPuzzle(idx, ud.value)) pzAutoClose(idx);
-      } else {
-        pzShake(b); puzzleWrong(idx);
-        pzReadout("✗ " + C().puzzles[idx].wrong + " — that print does not match the reference.");
-      }
-    },
-    dragStart: function(){}, dragMove: function(){}, dragEnd: function(){},
-    submit: function(){ return false; },
-    readout: readout};
-}
-/* ---- WEIGH: load the pan, then PULL THE LEVER to weigh in. ---- */
-function buildWeighStation(mech, idx){
-  var g = pzStationBase();
-  var st = {loaded: {}};
-  var beamGroup = new THREE.Group();
-  beamGroup.position.set(0, 2.65, -0.9); g.add(beamGroup);
-  var beam = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.15, 0.15),
-    new THREE.MeshStandardMaterial({color: 0x8a6a20}));
-  beamGroup.add(beam);
-  var post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1.6, 0.25),
-    new THREE.MeshStandardMaterial({color: 0x241a10}));
-  post.position.set(0, 1.8, -0.9); g.add(post);
-  [-1.9, 1.9].forEach(function(x){
-    var pan = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.55, 0.12, 20),
-      new THREE.MeshStandardMaterial({color: 0x9a9a9a, metalness: 0.6, roughness: 0.4}));
-    pan.position.set(x, -0.3, 0); beamGroup.add(pan);
-  });
-  var flag = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.4, 0.05),
-    new THREE.MeshStandardMaterial({color: 0xffd700, emissive: 0xc9a227, emissiveIntensity: 0.8}));
-  flag.position.set(0, 0.45, 0); flag.visible = false; beamGroup.add(flag);
-  var lever = new THREE.Group();
-  var lpost = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.0, 0.14),
-    new THREE.MeshStandardMaterial({color: 0x241a10}));
-  lpost.position.y = 0.5; lever.add(lpost);
-  var arm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, 0.1),
-    new THREE.MeshStandardMaterial({color: 0x8a6a20, metalness: 0.5, roughness: 0.4}));
-  arm.position.set(0.3, 1.0, 0); arm.rotation.z = -0.5; lever.add(arm);
-  var knob = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 10),
-    new THREE.MeshStandardMaterial({color: 0xc02a2a, roughness: 0.4}));
-  knob.position.set(0.52, 1.35, 0); lever.add(knob);
-  var llab = pzPlane("PULL THE LEVER", 1.6, 0.4, {font: 40});
-  llab.position.set(0.3, 1.75, 0); lever.add(llab);
-  lever.position.set(3.4, 1.07, 0.6);
-  lever.userData.pzkind = "weigh-lever";
-  g.add(lever);
-  var blocks = [];
-  mech.items.forEach(function(it, i){
-    var b = pzPlaque(it.label + " · " + it.w, 1.7, 0.7, {font: 32, maxChars: 18});
-    b.position.set(-3.4 + i * 1.6, 1.5, 0.9);
-    b.userData.pzkind = "weigh"; b.userData.i = i; b.userData.home = b.position.clone();
-    g.add(b); blocks.push(b);
-  });
-  function total(){
-    var t = 0;
-    Object.keys(st.loaded).forEach(function(i){ t += mech.items[+i].w; });
-    return Math.round(t * 10) / 10;
+  if(m.type === "sort") return "bins";
+  if(m.type === "dial") return "wheels";
+  if(m.type === "match"){
+    if(m.pairs) return ((S.caseId * 7 + idx) % 2 === 0) ? "connect" : "memory";
+    return "prints";
   }
-  function tilt(){ beamGroup.rotation.z = Math.max(-0.35, Math.min(0.35, (total() - mech.target) * 0.03)); }
-  function readout(){ pzReadout("Loaded: " + total() + " " + (mech.unit || "kg") + " / target " + mech.target + " " + (mech.unit || "kg") + " — tap blocks to load them, then PULL THE LEVER."); }
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind === "weigh-lever"){
-        lever.rotation.x = -0.4;
-        setTimeout(function(){ lever.rotation.x = 0; }, 250);
-        var att = Object.keys(st.loaded).map(Number);
-        var want = mech.correct.slice().sort(function(a, b){ return a - b; });
-        var got = att.slice().sort(function(a, b){ return a - b; });
-        var ok = JSON.stringify(got) === JSON.stringify(want);
-        if(ok){
-          beamGroup.rotation.z = 0; flag.visible = true;
-          if(attemptPuzzle(idx, att)) pzAutoClose(idx);
-        } else {
-          beamGroup.rotation.z = total() > mech.target ? -0.35 : 0.35;
-          pzShake(beamGroup); puzzleWrong(idx);
-          pzReadout("✗ " + C().puzzles[idx].wrong + " — the beam slams down. Adjust the load and pull again.");
-        }
-        return;
-      }
-      if(ud.pzkind !== "weigh") return;
-      var b = blocks[ud.i];
-      if(st.loaded[ud.i]){
-        delete st.loaded[ud.i];
-        g.add(b); b.position.copy(b.userData.home); b.rotation.set(0, 0, 0);
-        pzTint(b, 0x2a2118);
-      } else {
-        var k = Object.keys(st.loaded).length;
-        st.loaded[ud.i] = true;
-        beamGroup.add(b);
-        b.position.set(-1.9, -0.24 + 0.09 + k * 0.2, 0);
-        b.rotation.set(-Math.PI / 2, 0, 0);
-        pzTint(b, 0x2e5a2e);
-      }
-      tilt(); readout();
-    },
-    dragStart: function(){}, dragMove: function(){}, dragEnd: function(){},
-    submit: function(){ return false; },
-    readout: readout};
-}
-/* ---- SLIDER: scrub the timeline, then CAPTURE THE FRAME at the moment. ---- */
-function buildSliderStation(mech, idx){
-  var g = pzStationBase();
-  var st = {value: mech.min || 0};
-  var rail = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.18, 0.3),
-    new THREE.MeshStandardMaterial({color: 0x241a10}));
-  rail.position.set(0, 1.6, 0); g.add(rail);
-  var span = mech.max - mech.min;
-  var tickStep = span >= 20 ? 5 : (mech.step || 1);
-  for(var v = mech.min; v <= mech.max; v += tickStep){
-    var tick = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.4, 0.1),
-      new THREE.MeshStandardMaterial({color: 0xc9a227}));
-    tick.position.set(-2.8 + (v - mech.min) / span * 5.6, 1.6, 0);
-    g.add(tick);
+  if(m.type === "weigh") return "scale";
+  if(m.type === "slider"){
+    if(m.unit === "min02" || m.unit === "frame") return "frames";
+    return "gauge";
   }
-  var knob = new THREE.Mesh(new THREE.SphereGeometry(0.38, 20, 16),
-    new THREE.MeshStandardMaterial({color: 0xc9a227, metalness: 0.5, roughness: 0.4}));
-  knob.position.set(-2.8, 1.95, 0); knob.userData.pzkind = "slider-knob";
-  g.add(knob);
-  [-2.8, 2.8].forEach(function(x, i){
-    var lab = pzPlane(i === 0 ? String(mech.min) : String(mech.max), 0.9, 0.45, {font: 40});
-    lab.position.set(x, 1.05, 0); g.add(lab);
-  });
-  var frame = new THREE.Group();
-  var fbox = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 0.12),
-    new THREE.MeshStandardMaterial({color: 0x1a1a24}));
-  frame.add(fbox);
-  var fscr = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.9),
-    new THREE.MeshStandardMaterial({color: 0x0a1826, emissive: 0x2a5a8a, emissiveIntensity: 0.5}));
-  fscr.position.z = 0.07; frame.add(fscr);
-  var flab = pzPlane("CAPTURE FRAME", 1.8, 0.4, {font: 40});
-  flab.position.set(0, -0.75, 0.07); frame.add(flab);
-  frame.position.set(0, 3.1, 0);
-  frame.userData.pzkind = "slider-frame"; frame.userData.screen = fscr;
-  g.add(frame);
-  function setVal(v){
-    v = Math.max(mech.min, Math.min(mech.max, v));
-    v = Math.round(v / (mech.step || 1)) * (mech.step || 1);
-    st.value = v;
-    knob.position.x = -2.8 + (v - mech.min) / span * 5.6;
-    pzReadout("Value: " + fmtSlider(mech, v) + " — scrub the timeline, then tap CAPTURE FRAME at the moment.");
-  }
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind === "slider-frame"){
-        if(st.value === mech.answer){
-          frame.userData.screen.material.emissiveIntensity = 1.6;
-          if(attemptPuzzle(idx, st.value)) pzAutoClose(idx);
-        } else {
-          pzShake(knob); puzzleWrong(idx);
-          pzReadout("✗ " + C().puzzles[idx].wrong + " — not that moment. Keep scrubbing.");
-        }
-      }
-    },
-    dragStart: function(){},
-    dragMove: function(ud, info){
-      if(this.solved || info.worldX === null || info.worldX === undefined) return;
-      setVal(mech.min + (info.worldX + 2.8) / 5.6 * span);
-    },
-    dragEnd: function(){},
-    submit: function(){ return false; },
-    readout: function(){ pzReadout("Value: " + fmtSlider(mech, st.value)); }};
+  if(m.type === "test") return "vessels";
+  return "timeline";
 }
-/* ---- TEST: test a vessel, then tap it again to place it on the stand. ---- */
-function buildTestStation(mech, idx){
-  var g = pzStationBase();
-  var st = {tested: {}};
-  var vessels = [];
-  mech.items.forEach(function(it, i){
-    var v = new THREE.Group();
-    var isDec = it.toLowerCase().indexOf("decanter") >= 0;
-    var body = new THREE.Mesh(
-      new THREE.CylinderGeometry(isDec ? 0.45 : 0.32, isDec ? 0.55 : 0.28, isDec ? 1.3 : 0.8, 16),
-      new THREE.MeshStandardMaterial({color: 0x7a9a6a, transparent: true, opacity: 0.85}));
-    body.position.y = isDec ? 0.65 : 0.4; v.add(body);
-    var lab = pzPlane(it, 2.2, 0.6, {font: 30, maxChars: 26});
-    lab.position.y = isDec ? 1.85 : 1.35; v.add(lab);
-    var res = pzPlane("", 1.6, 0.5, {font: 40});
-    res.position.y = isDec ? 2.35 : 1.9; res.visible = false; v.add(res);
-    v.position.set(-2.4 + i * 2.4, 1.07, 0);
-    v.userData.pzkind = "test"; v.userData.value = it; v.userData.res = res;
-    g.add(v); vessels.push(v);
-  });
-  return {group: g, solved: !!S.puzz[idx],
-    tap: function(ud){
-      if(this.solved){ pzReadout(pzSolvedMsg(idx)); return; }
-      if(!pzGateCheck(idx)) return;
-      if(ud.pzkind !== "test") return;
-      var v = vessels.filter(function(x){ return x.userData.value === ud.value; })[0];
-      if(!st.tested[ud.value]){
-        st.tested[ud.value] = true;
-        var pos = ud.value === mech.answer;
-        var res = v.userData.res;
-        res.material.map = pzTex(pos ? "✓ POSITIVE" : "— NEGATIVE", {font: 52, bg: pos ? "#1a3a1a" : "#2a1a1a"});
-        res.material.needsUpdate = true; res.visible = true;
-        pzReadout("Tested: " + ud.value + " — " + (pos ? "POSITIVE reaction." : "negative.") + " Tap it again to place it on the stand.");
-        return;
-      }
-      if(ud.value === mech.answer){
-        v.position.y = 1.5;
-        if(attemptPuzzle(idx, ud.value)) pzAutoClose(idx);
-      } else {
-        pzShake(v); puzzleWrong(idx);
-        pzReadout("✗ " + C().puzzles[idx].wrong + " — that vessel tested negative.");
-      }
-    },
-    dragStart: function(){}, dragMove: function(){}, dragEnd: function(){},
-    submit: function(){ return false; },
-    readout: function(){ pzReadout(mech.prompt || "Tap a vessel to test it, then tap it again to place it."); }};
+/* 8 forensic instruments, one per puzzle family. */
+function pz5Instrument(type){
+  if(type === "timeline" || type === "cipher") return "scrubber";
+  if(type === "bins" || type === "memory") return "sweep";
+  if(type === "wheels" || type === "gauge") return "breaker";
+  if(type === "connect") return "overlay";
+  if(type === "prints") return "loupe";
+  if(type === "scale") return "tare";
+  if(type === "frames") return "gantry";
+  if(type === "vessels") return "sweep";
+  return "scrubber";
+}
+function pz5InstName(inst){
+  return {scrubber: "TIMELINE SCRUBBER", sweep: "SENSOR SWEEP", overlay: "OPTICAL OVERLAY ALIGNER",
+    tare: "TARE SCALE", breaker: "CIRCUIT BREAKER PANEL", gantry: "X-RAY GANTRY",
+    loupe: "OPTICAL LOUPE", floorplan: "ARCHITECTURAL FLOORPLAN"}[inst] || inst;
+}
+function pz5InstBlurb(inst){
+  return {scrubber: "Drag the read head across the FULL track to sweep the timeline, then lock the calibration.",
+    sweep: "Drag the sensor beam across the FULL tray to sweep it, then lock the calibration.",
+    overlay: "Drag the overlay until it sits exactly on the reference, then lock the calibration.",
+    tare: "Turn the tare knob until the beam reads zero, then lock the calibration.",
+    breaker: "Flip every breaker ON to power the instrument, then lock the calibration.",
+    gantry: "Drag the gantry across the FULL strip to scan it, then lock the calibration.",
+    loupe: "Drag the loupe across the FULL reference print to scan it, then lock the calibration."}[inst] || "";
+}
+/* Floorplan presentation for door/room order puzzles (same timeline logic). */
+function pz5UseFloorplan(st){
+  if(st.type !== "timeline") return false;
+  return /door|room|floor|wing|deck|hall|chamber|corridor|ward|cabin|gallery/i.test(
+    (st.pz.title || "") + " " + ((st.mech && st.mech.prompt) || ""));
+}
+function pz5SeededOffset(st){
+  var s = S.caseId * 1000 + st.idx * 37 + 7;
+  var v = ((s % 13) - 6) / 10;
+  if(Math.abs(v) < 0.2) v = v < 0 ? -0.35 : 0.35;
+  return v;
 }
 
-function openPuzzle3D(idx){
-  try{
-    if(typeof THREE === "undefined" || !SCENE || !SCENE.scene) return false;
-    var c = C(); if(!c || !c.puzzles[idx]) return false;
-    var pz = c.puzzles[idx], mech = pz.mech || {};
-    closeSheet();
-    var builder = {order: buildOrderStation, sort: buildSortStation, dial: buildDialStation,
-      weigh: buildWeighStation, slider: buildSliderStation, test: buildTestStation}[mech.type];
-    if(mech.type === "match") builder = mech.pairs ? buildMatchStation : buildMatchPickStation;
-    if(!builder) return false;
-    closePuzzle3D();
-    var station = builder(mech, idx);
-    var hidden = [];
-    SCENE.scene.children.forEach(function(ch){
-      if(ch.isLight) return;
-      if(ch.visible){ ch.visible = false; hidden.push(ch); }
-    });
-    SCENE.scene.add(station.group);
-    SCENE.camera.position.set(0, 2.6, 6.6);
-    SCENE.camera.lookAt(0, 1.3, 0);
-    PZ3D = {idx: idx, mech: mech, station: station, scene: SCENE.scene, hidden: hidden, drag: null, downPos: null, downTime: 0};
-    var bar = $("pzbar"); if(bar) bar.classList.remove("hidden");
-    var t = $("pz-title"); if(t) t.textContent = "🧩 " + pz.title;
-    var h = $("pz-hint"); if(h) h.setAttribute("data-idx", idx);
-    var _g = pzGate(idx);
-    pzReadout(station.solved ? pzSolvedMsg(idx) : (!_g.met ? pzGateMsg(_g) : (mech.prompt || pz.hint)));
+/* ---------------- open / close / stage chrome ---------------- */
+function pz5StageLabel(){
+  var st = PZ5; if(!st) return "";
+  if(st.stage === 1) return "▣ STAGE 1/3 — CALIBRATE · " + pz5InstName(st.inst);
+  if(st.stage === 2) return "▣ STAGE 2/3 — ISOLATE THE ANOMALY · click the true node";
+  return "▣ STAGE 3/3 — FORENSIC VERIFICATION · lock the finding";
+}
+function pz5Chrome(){
+  var st = PZ5; if(!st) return;
+  pz5El("pz2d-sub").textContent = pz5StageLabel();
+}
+function pz5NudgeText(){
+  var st = PZ5, m = st.mech;
+  if(!st) return "";
+  switch(st.type){
+    case "timeline": return "One event is out of place — check the earliest one first.";
+    case "cipher": return "Sound the letters out — what word fits the case?";
+    case "bins": return st.lastBounced ? "Look at “" + st.lastBounced + "” again — where does it really belong?" : "One item is sitting in the wrong bin.";
+    case "wheels": {
+      var any = false; for(var i = 0; i < st.wheels.length; i++) if(st.wheels[i] === m.answer[i]) any = true;
+      return any ? "At least one wheel is already right — find which." : "None of the wheels are right yet — the clues point to the moment.";
+    }
+    case "connect": return "One pair you tried doesn’t belong together.";
+    case "memory": {
+      for(var k in st.seen) if(!st.matched[k]) return "You’ve seen “" + st.cards[+k].text + "” — remember where it was.";
+      return "Flip two cards — look for a pair that belongs together.";
+    }
+    case "prints": return "Compare the cores closely — the true match shares the same pattern.";
+    case "scale": {
+      var tot = 0; Object.keys(st.loaded).forEach(function(i){ tot += m.items[+i].w; });
+      tot = Math.round(tot * 10) / 10;
+      if(tot === m.target && !st.pinnedScale) return "The weight matches, but the manifest doesn’t — one loaded item doesn’t belong.";
+      if(tot > m.target) return "You’re over the target — take something off.";
+      return "You’re under the target — add something.";
+    }
+    case "frames": {
+      if(st.viewed === null || st.viewed === undefined) return "Scan the strip — one frame looks different from all the rest.";
+      if(st.viewed < m.answer) return "The moment you need is later than " + fmtSlider(m, st.viewed) + ".";
+      if(st.viewed > m.answer) return "The moment you need is earlier than " + fmtSlider(m, st.viewed) + ".";
+      return "That frame looks right — pin it.";
+    }
+    case "gauge": {
+      if(st.gval < m.answer) return "The value you need is higher than " + st.gval + ".";
+      if(st.gval > m.answer) return "The value you need is lower than " + st.gval + ".";
+      return "That value looks right — pin the lock.";
+    }
+    case "vessels": return "Only one vessel reacted — test them all first.";
+    default: return "Keep going — the clues point the way.";
+  }
+}
+function pz5ShowNudge(){
+  var n = pz5El("pz2d-nudge"); if(!n) return;
+  n.textContent = "👀 Terminal nudge: " + pz5NudgeText();
+}
+function pz5Hint(){
+  if(!PZ5) return;
+  pz5Say("💡 " + PZ5.pz.hint, null);
+  try{ speak(PZ5.pz.hint); }catch(e){}
+}
+function pz5OpenSolved(st){
+  var pz = st.pz;
+  pz5El("pz2d-board").innerHTML = "<div class='pz5-verified'><div class='pz5-verified-mark'>✓ VERIFIED</div>" +
+    "<p class='pz5-line'>" + esc(pz.done) + "</p>" +
+    (pz.clue ? "<div class='pz5-takeaway'><div class='pz5-takeaway-head'>FORENSIC TAKEAWAY</div><b>" + esc(pz.clue.title) + "</b> — " + esc(pz.clue.text) + "</div>" : "") + "</div>";
+  pz5Progress(1, 1, "Solved!");
+}
+function openPuzzle5(idx){
+  var c = C(); if(!c || !c.puzzles[idx]) return false;
+  var pz = c.puzzles[idx];
+  closeSheet();
+  var view = pz5El("pz2d"); if(!view) return false;
+  if(!view._wired5){
+    view._wired5 = true;
+    var cl = pz5El("pz2d-close"); if(cl) cl.addEventListener("click", closePuzzle5);
+    var hb = pz5El("pz2d-hint"); if(hb) hb.addEventListener("click", pz5Hint);
+    var nb = pz5El("pz2d-nudgebtn"); if(nb) nb.addEventListener("click", pz5ShowNudge);
+    pz5El("pz2d-board").addEventListener("click", pz5BoardClick);
+  }
+  var type = pz5Type(pz, idx);
+  var inst = pz5Instrument(type);
+  PZ5 = {idx: idx, mech: pz.mech || {}, pz: pz, type: type, inst: inst, tier: pz5Tier(),
+    played: false, wrongs: 0, solved: false, lastBounced: null,
+    stage: 1, calibrated: false,
+    cal: {pos: 0, vmin: 1, vmax: 0, offset: pz5SeededOffset({idx: idx}), tare: pz5SeededOffset({idx: idx + 3}), breakers: []},
+    api: null};
+  var st = PZ5;
+  st.api = pz5Api();
+  if(inst === "breaker"){
+    var n = (type === "wheels") ? (st.mech.answer || []).length : 3;
+    for(var i = 0; i < n; i++) st.cal.breakers.push(false);
+  }
+  pz5El("pz2d-title").textContent = "🧩 " + pz.title;
+  pz5El("pz2d-goal").textContent = (pz.mech && pz.mech.prompt) || pz.hint;
+  var sv = pz5El("pz2d-solve"); if(sv) sv.classList.add("hidden");
+  pz5Say("", null);
+  var ng = pz5El("pz2d-nudge"); if(ng) ng.textContent = "";
+  if(S.puzz[idx]){
+    pz5OpenSolved(st);
+    pz5Chrome();
+    view.classList.add("open");
     return true;
-  }catch(e){ return false; }
+  }
+  pz5RenderS1();
+  view.classList.add("open");
+  return true;
 }
-function closePuzzle3D(){
-  var bar = $("pzbar"); if(bar) bar.classList.add("hidden");
-  if(!PZ3D) return;
-  try{
-    if(PZ3D.scene && PZ3D.station.group.parent) PZ3D.scene.remove(PZ3D.station.group);
-    (PZ3D.hidden || []).forEach(function(ch){ ch.visible = true; });
-    if(SCENE && SCENE.applyCam) SCENE.applyCam();
-  }catch(e){}
-  PZ3D = null;
+function closePuzzle5(){
+  var view = pz5El("pz2d"); if(view) view.classList.remove("open");
+  PZ5 = null;
 }
+/* ---------------- STAGE 1: calibrate ---------------- */
+function pz5S1Telemetry(){
+  var st = PZ5, c = st.cal;
+  if(st.inst === "breaker"){
+    var on = 0; c.breakers.forEach(function(b){ if(b) on++; });
+    return "POWER " + on + "/" + c.breakers.length + " · PANEL " + (on === c.breakers.length ? "LIVE" : "DARK");
+  }
+  if(st.inst === "overlay") return "OFFSET " + (c.offset >= 0 ? "+" : "") + c.offset.toFixed(2) + " · TOL ±" + pz5Tol().toFixed(2);
+  if(st.inst === "tare") return "TARE " + (c.tare >= 0 ? "+" : "") + c.tare.toFixed(2) + " · TOL ±" + pz5Tol().toFixed(2);
+  var pct = (c.vmin > c.vmax) ? 0 : Math.round((c.vmax - c.vmin) * 100);
+  return "SWEEP " + pct + "% · HEAD " + Math.round(c.pos * 100) + "%";
+}
+function pz5RenderS1(){
+  var st = PZ5; if(!st) return;
+  pz5Chrome();
+  var board = pz5El("pz2d-board");
+  var tel = pz5S1Telemetry();
+  var html = "<div class='pz5-scanlines'></div><div class='pz5-cross tl'></div><div class='pz5-cross tr'></div><div class='pz5-cross bl'></div><div class='pz5-cross br'></div>" +
+    "<div class='pz5-inst-head'><span class='pz5-inst-name'>" + pz5InstName(st.inst) + "</span><span class='pz5-tel'>" + tel + "</span></div>" +
+    "<p class='pz5-line'>" + pz5InstBlurb(st.inst) + "</p>";
+  if(st.inst === "breaker"){
+    html += "<div class='pz5-breakers'>";
+    st.cal.breakers.forEach(function(b, i){
+      html += "<button class='pz5-breaker" + (b ? " on" : "") + "' data-pz5='breaker' data-i='" + i + "'><span class='pz5-brk-label'>BRK " + (i + 1) + "</span><span class='pz5-brk-state'>" + (b ? "ON" : "OFF") + "</span></button>";
+    });
+    html += "</div>";
+  } else if(st.inst === "overlay"){
+    var off = st.cal.offset;
+    html += "<div class='pz5-overlay-wrap'><div class='pz5-strip ref'><span>REFERENCE</span><i>▓▓▓▓ ▓▓ ▓▓▓▓▓</i></div>" +
+      "<div class='pz5-strip ovl' style='transform:translateX(" + Math.round(off * 120) + "px)'><span>OVERLAY</span><i>▓▓▓▓ ▓▓ ▓▓▓▓▓</i></div></div>" +
+      "<div class='pz5-track' data-track='offset'><div class='pz5-knob' style='left:calc(" + Math.round((off + 1) / 2 * 100) + "% - 22px)'></div></div>" +
+      "<p class='pz5-line'>Drag the knob until the overlay sits on the reference (offset 0).</p>";
+  } else if(st.inst === "tare"){
+    var tr = st.cal.tare;
+    html += "<div class='pz5-beam' style='transform:rotate(" + Math.round(tr * 25) + "deg)'>⚖ BEAM</div>" +
+      "<div class='pz5-track' data-track='tare'><div class='pz5-knob' style='left:calc(" + Math.round((tr + 1) / 2 * 100) + "% - 22px)'></div></div>" +
+      "<p class='pz5-line'>Turn the tare knob until the beam reads level (tare 0).</p>";
+  } else {
+    var pos = st.cal.pos;
+    var sviz = "<div class='pz5-stripviz'>";
+    for(var fi = 0; fi < 12; fi++) sviz += "<span class='pz5-svcell'><i>▮</i><b>" + (fi < 10 ? "0" + fi : fi) + "</b></span>";
+    sviz += "</div>";
+    html += sviz + "<div class='pz5-track' data-track='sweep'><div class='pz5-knob' style='left:calc(" + Math.round(pos * 100) + "% - 22px)'></div></div>" +
+      "<p class='pz5-line'>Drag the read head from one end of the track to the other — a full sweep.</p>";
+  }
+  html += "<button class='pz5-lock' data-pz5='lock'>🔒 LOCK CALIBRATION</button>";
+  board.innerHTML = html;
+  pz5WireTracks();
+  pz5Progress(0, 1, "Stage 1 — calibrate");
+}
+function pz5WireTracks(){
+  var board = pz5El("pz2d-board"); if(!board) return;
+  board.querySelectorAll("[data-track]").forEach(function(tr){
+    var kind = tr.getAttribute("data-track");
+    var setFromEvent = function(e){
+      var r = tr.getBoundingClientRect();
+      var p = r.width ? (e.clientX - r.left) / r.width : 0;
+      p = Math.max(0, Math.min(1, p));
+      pz5TrackSet(kind, p);
+    };
+    tr.addEventListener("pointerdown", function(e){
+      if(tr.setPointerCapture){ try{ tr.setPointerCapture(e.pointerId); }catch(err){} }
+      setFromEvent(e);
+      var mv = function(ev){ setFromEvent(ev); };
+      var up = function(){ if(tr.releasePointerCapture){ try{ tr.releasePointerCapture(e.pointerId); }catch(err){} } tr.removeEventListener("pointermove", mv); tr.removeEventListener("pointerup", up); tr.removeEventListener("pointercancel", up); };
+      tr.addEventListener("pointermove", mv);
+      tr.addEventListener("pointerup", up);
+      tr.addEventListener("pointercancel", up);
+    });
+  });
+}
+function pz5TrackSet(kind, p){
+  var st = PZ5; if(!st || st.stage !== 1) return;
+  st.played = true;
+  if(kind === "sweep"){
+    st.cal.pos = p;
+    if(p < st.cal.vmin) st.cal.vmin = p;
+    if(p > st.cal.vmax) st.cal.vmax = p;
+  } else if(kind === "offset"){
+    st.cal.offset = (p * 2 - 1);
+  } else if(kind === "tare"){
+    st.cal.tare = (p * 2 - 1);
+  }
+  /* In-place refresh only: a full re-render here would replace the track
+     element mid-drag and kill the pointer capture. */
+  pz5TrackRefresh();
+}
+function pz5CalOk(){
+  var st = PZ5, c = st.cal;
+  if(st.inst === "breaker"){
+    for(var i = 0; i < c.breakers.length; i++) if(!c.breakers[i]) return false;
+    return true;
+  }
+  if(st.inst === "overlay") return Math.abs(c.offset) <= pz5Tol();
+  if(st.inst === "tare") return Math.abs(c.tare) <= pz5Tol();
+  return c.vmin <= 0.02 && c.vmax >= 0.98;
+}
+function pz5CalFailMsg(){
+  var st = PZ5, c = st.cal;
+  if(st.inst === "breaker"){
+    var off = 0; c.breakers.forEach(function(b){ if(!b) off++; });
+    return "Panel not fully powered — " + off + " breaker(s) still down.";
+  }
+  if(st.inst === "overlay") return "Misaligned by " + Math.abs(c.offset).toFixed(2) + " — nudge the overlay onto the reference.";
+  if(st.inst === "tare") return "Scale not zeroed — tare reads " + (c.tare >= 0 ? "+" : "") + c.tare.toFixed(2) + ".";
+  return "Incomplete sweep — run the beam across the full range first.";
+}
+function pz5Lock(){
+  var st = PZ5; if(!st || st.stage !== 1) return false;
+  if(!pz5CalOk()){
+    pz5Wrong(pz5CalFailMsg());
+    return false;
+  }
+  st.calibrated = true;
+  st.stage = 2;
+  pz5EnterS2();
+  pz5Tone("good");
+  pz5Say("✓ Calibration locked — anomaly nodes are live. Click the true node.", true);
+  pz5RenderS2();
+  return true;
+}
+
+/* ---------------- STAGE 2: isolate the anomaly ---------------- */
+function pz5S2Total(st){
+  var m = st.mech;
+  if(st.type === "timeline" || st.type === "cipher") return m.answer.length;
+  if(st.type === "bins") return m.items.length;
+  if(st.type === "wheels") return m.answer.length;
+  if(st.type === "connect" || st.type === "memory") return m.pairs.length;
+  return 1;
+}
+function pz5S2Pinned(st){
+  var m = st.mech;
+  if(st.type === "timeline" || st.type === "cipher") return st.seq.length;
+  if(st.type === "bins") return Object.keys(st.placed).length;
+  if(st.type === "wheels"){ var n = 0; for(var k in st.armed) if(st.armed[k]) n++; return n; }
+  if(st.type === "connect") return Object.keys(st.links).length;
+  if(st.type === "memory"){
+    var seen = {}, n = 0;
+    for(var i in st.matched){ var cd = st.cards[+i], k2 = cd.li + ":" + cd.ri; if(!seen[k2]){ seen[k2] = true; n++; } }
+    return n;
+  }
+  if(st.type === "prints") return st.pinnedPrint >= 0 ? 1 : 0;
+  if(st.type === "scale") return st.pinnedScale ? 1 : 0;
+  if(st.type === "frames") return st.pinnedFrame >= 0 ? 1 : 0;
+  if(st.type === "gauge") return st.pinnedGauge ? 1 : 0;
+  if(st.type === "vessels") return st.pinnedVessel >= 0 ? 1 : 0;
+  return 0;
+}
+function pz5S2Done(st){
+  st = st || PZ5; if(!st) return false;
+  return pz5S2Pinned(st) >= pz5S2Total(st);
+}
+function pz5EnterS2(){
+  var st = PZ5, m = st.mech;
+  st.seq = []; st.placed = {}; st.wheels = []; st.armed = {}; st.links = {};
+  st.flipped = []; st.matched = {}; st.seen = {}; st.examined = {}; st.pinnedPrint = -1;
+  st.loaded = {}; st.pinnedScale = false; st.viewed = null; st.pinnedFrame = -1;
+  st.gval = m.min || 0; st.pinnedGauge = false; st.tested = {}; st.pinnedVessel = -1;
+  st.held = -1; st.selL = -1;
+  if(st.type === "timeline" || st.type === "cipher"){
+    var tiles = m.items.map(function(t, i){ return {i: i, t: t}; });
+    st.tray = shuffleSeeded(tiles, S.caseId * 100 + st.idx + 11);
+    st.used = {};
+    if(st.tier === 1 && m.answer.length){
+      st.seq = [m.answer[0]];
+      for(var k = 0; k < st.tray.length; k++){
+        if(st.tray[k].t === m.answer[0]){ st.used[st.tray[k].i] = true; break; }
+      }
+    }
+    st.noise = [];
+    for(var n = 0; n < pz5NoiseCount(); n++) st.noise.push("n" + n);
+  }
+  if(st.type === "bins" && st.tier === 1 && m.items.length){
+    st.placed[0] = m.answer[0];
+  }
+  if(st.type === "wheels"){
+    st.wheels = m.answer.map(function(){ return 0; });
+    if(st.tier === 1 && m.answer.length){ st.wheels[0] = m.answer[0]; st.armed[0] = true; }
+  }
+  if(st.type === "connect" && st.tier === 1 && m.pairs.length){
+    st.links[m.pairs[0][0]] = m.pairs[0][1];
+  }
+  if(st.type === "connect"){
+    st.noise = [];
+    for(var n3 = 0; n3 < pz5NoiseCount(); n3++) st.noise.push("n" + n3);
+  }
+  if(st.type === "memory"){
+    var cards = [];
+    m.pairs.forEach(function(pr){
+      cards.push({text: m.left[pr[0]], li: pr[0], ri: pr[1], side: "L"});
+      cards.push({text: m.right[pr[1]], li: pr[0], ri: pr[1], side: "R"});
+    });
+    st.cards = shuffleSeeded(cards, S.caseId * 100 + st.idx + 5);
+    if(st.tier === 1){
+      st.cards.forEach(function(cd, i){
+        if(cd.li === m.pairs[0][0] && cd.ri === m.pairs[0][1]) st.matched[i] = true;
+      });
+    }
+    st.noise = [];
+    for(var n2 = 0; n2 < pz5NoiseCount(); n2++) st.noise.push("n" + n2);
+  }
+  if(st.type === "frames"){
+    var vals = [];
+    for(var v = m.min; v <= m.max; v += (m.step || 1)) vals.push(v);
+    st.frameVals = vals;
+  }
+  st.api = pz5Api();
+}
+function pz5VerifyRow(){
+  var done = pz5S2Done();
+  return "<div class='pz5-verify-row'><button class='pz5-verify" + (done ? " ready" : "") + "' data-pz5='verify'" + (done ? "" : " disabled") + ">✓ LOCK FINDING — VERIFY</button>" +
+    "<span class='pz5-verify-note'>" + (done ? "Anomaly isolated — lock it in." : "Pin the true anomaly first — VERIFY stays locked until then.") + "</span></div>";
+}
+function pz5Chrome2(){
+  pz5Chrome();
+  var st = PZ5;
+  pz5Progress(pz5S2Pinned(st), pz5S2Total(st));
+}
+function pz5RenderS2(){
+  var st = PZ5; if(!st) return;
+  pz5Chrome();
+  var board = pz5El("pz2d-board");
+  var inner = "";
+  if(st.type === "timeline" || st.type === "cipher") inner = pz5RenderSequence();
+  else if(st.type === "bins") inner = pz5RenderBins();
+  else if(st.type === "wheels") inner = pz5RenderWheels();
+  else if(st.type === "connect") inner = pz5RenderConnect();
+  else if(st.type === "memory") inner = pz5RenderMemory();
+  else if(st.type === "prints") inner = pz5RenderPrints();
+  else if(st.type === "scale") inner = pz5RenderScale();
+  else if(st.type === "frames") inner = pz5RenderFrames();
+  else if(st.type === "gauge") inner = pz5RenderGauge();
+  else if(st.type === "vessels") inner = pz5RenderVessels();
+  board.innerHTML = "<div class='pz5-scanlines'></div><div class='pz5-cross tl'></div><div class='pz5-cross tr'></div><div class='pz5-cross bl'></div><div class='pz5-cross br'></div>" + inner + pz5VerifyRow();
+  pz5Chrome2();
+  if(st.type === "prints") pz5DrawPrintCanvases();
+  if(st.type === "gauge") pz5WireGauge();
+}
+/* ---- sequence (timeline / cipher / floorplan) ---- */
+function pz5RenderSequence(){
+  var st = PZ5, m = st.mech;
+  var slots = "<div class='pz5-slots'>";
+  for(var s = 0; s < m.answer.length; s++){
+    var val = st.seq[s];
+    slots += "<div class='pz5-slot" + (s === st.seq.length ? " next" : "") + "'><span class='pz5-slotnum'>" + (s + 1) + "</span><span class='pz5-slotval'>" + (val !== undefined ? esc(val) : "· · ·") + "</span></div>";
+  }
+  slots += "</div>";
+  var word = "";
+  if(st.type === "cipher"){
+    var w = "";
+    for(var wi = 0; wi < m.answer.length; wi++) w += (st.seq[wi] !== undefined ? st.seq[wi] : "_");
+    word = "<div class='pz5-word'>" + esc(w) + "</div>";
+  }
+  var nodes = "";
+  if(pz5UseFloorplan(st)){
+    nodes = "<div class='pz5-floorplan'><svg viewBox='0 0 320 190' class='pz5-plan-svg'>" +
+      "<rect x='8' y='8' width='304' height='174' class='pz5-plan-room'/>" +
+      "<rect x='8' y='8' width='150' height='80' class='pz5-plan-room'/>" +
+      "<rect x='162' y='8' width='150' height='80' class='pz5-plan-room'/>" +
+      "<rect x='8' y='92' width='304' height='90' class='pz5-plan-room'/>" +
+      "<text x='16' y='26' class='pz5-plan-label'>SECTOR A</text><text x='170' y='26' class='pz5-plan-label'>SECTOR B</text><text x='16' y='110' class='pz5-plan-label'>SECTOR C</text>" +
+      "</svg><div class='pz5-plan-nodes'>";
+    st.tray.forEach(function(tl){
+      if(st.used[tl.i]) return;
+      var px = 20 + ((tl.i * 67) % 260), py = 30 + ((tl.i * 53) % 130);
+      nodes += "<button class='pz5-plannode' style='left:" + px + "px;top:" + py + "px' data-pz5='tile' data-i='" + tl.i + "' title='" + esc(tl.t) + "'>⬢</button>";
+    });
+    nodes += "</div></div><div class='pz5-plan-legend'>";
+    st.tray.forEach(function(tl){
+      if(st.used[tl.i]) return;
+      nodes += "<button class='pz5-legend' data-pz5='tile' data-i='" + tl.i + "'>⬢ " + esc(tl.t) + "</button>";
+    });
+    nodes += "</div>";
+  } else {
+    nodes = "<div class='pz5-tray'>";
+    st.tray.forEach(function(tl){
+      if(st.used[tl.i]) return;
+      nodes += "<button class='pz5-tile' data-pz5='tile' data-i='" + tl.i + "'>" + esc(tl.t) + "</button>";
+    });
+    nodes += "</div>";
+  }
+  var noise = "";
+  if(st.noise.length){
+    noise = "<div class='pz5-noise-row'>";
+    st.noise.forEach(function(nid){
+      noise += "<button class='pz5-noise' data-pz5='noise' data-i='" + nid + "'>··· signal noise</button>";
+    });
+    noise += "</div>";
+  }
+  return slots + word + nodes + noise;
+}
+function pz5PinTile(trayIdx){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  var tl = null;
+  for(var i = 0; i < st.tray.length; i++) if(st.tray[i].i === trayIdx) tl = st.tray[i];
+  if(!tl || st.used[tl.i]) return false;
+  st.played = true;
+  if(tl.t === m.answer[st.seq.length]){
+    st.seq.push(tl.t); st.used[tl.i] = true;
+    pz5Tone("good"); pz5Say("✓ Node pinned — " + tl.t, true);
+    pz5AdvanceS2();
+    return true;
+  }
+  pz5Wrong("That node doesn't come next in the sequence.");
+  return false;
+}
+/* ---- bins ---- */
+function pz5RenderBins(){
+  var st = PZ5, m = st.mech;
+  var tray = "<div class='pz5-tray'>";
+  m.items.forEach(function(it, i){
+    if(st.placed[i] !== undefined) return;
+    tray += "<button class='pz5-item" + (st.held === i ? " held" : "") + "' data-pz5='item' data-i='" + i + "'>" + esc(it) + "</button>";
+  });
+  tray += "</div>";
+  var bins = "<div class='pz5-bins'>";
+  m.buckets.forEach(function(b, bi){
+    var inside = [];
+    for(var k in st.placed) if(st.placed[k] === bi) inside.push(m.items[+k]);
+    bins += "<div class='pz5-bin'><b>" + esc(b) + "</b><span class='pz5-bincount'>" + inside.length + " filed</span><div class='pz5-binitems'>" +
+      inside.map(function(x){ return "<span class='pz5-filed'>" + esc(x) + "</span>"; }).join("") +
+      "</div><button class='pz5-binbtn' data-pz5='bucket' data-b='" + bi + "'>▸ File here</button></div>";
+  });
+  bins += "</div>";
+  return tray + bins;
+}
+function pz5AssignItem(i, b){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  if(st.placed[i] !== undefined) return false;
+  st.played = true;
+  if(m.answer[i] === b){
+    st.placed[i] = b; st.held = -1;
+    pz5Tone("good"); pz5Say("✓ Filed — " + m.items[i], true);
+    pz5AdvanceS2();
+    return true;
+  }
+  st.lastBounced = m.items[i]; st.held = -1;
+  pz5Wrong("Wrong bin for “" + m.items[i] + "” — it bounces back.");
+  return false;
+}
+/* ---- wheels ---- */
+function pz5RenderWheels(){
+  var st = PZ5, m = st.mech;
+  var time = "";
+  if(m.fmt === "time" && st.wheels.length === 4){
+    time = "<div class='pz5-fmt'>" + st.wheels[0] + st.wheels[1] + ":" + st.wheels[2] + st.wheels[3] + "</div>";
+  }
+  var html = time + "<div class='pz5-wheels'>";
+  st.wheels.forEach(function(d, i){
+    var max = m.wheels[i];
+    html += "<div class='pz5-wheel'><button class='pz5-wbtn' data-pz5='wheel-up' data-i='" + i + "'>▲</button>" +
+      "<div class='pz5-digit" + (st.armed[i] ? " ok" : "") + "'>" + d + "</div>" +
+      "<button class='pz5-wbtn' data-pz5='wheel-down' data-i='" + i + "'>▼</button>" +
+      "<button class='pz5-pinbtn" + (st.armed[i] ? " ok" : "") + "' data-pz5='pinwheel' data-i='" + i + "'>" + (st.armed[i] ? "✓ PINNED" : "⬢ PIN") + "</button></div>";
+  });
+  html += "</div>";
+  return html;
+}
+function pz5SetWheel(i, v){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  var max = m.wheels[i];
+  st.wheels[i] = ((v % max) + max) % max;
+  st.played = true;
+  pz5RenderS2();
+  return true;
+}
+function pz5PinWheel(i){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  if(st.wheels[i] === m.answer[i]){
+    st.armed[i] = true;
+    pz5Tone("good"); pz5Say("✓ Wheel " + (i + 1) + " pinned on the true digit.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  pz5Wrong("Wheel " + (i + 1) + " isn't on the true digit yet.");
+  return false;
+}
+/* ---- connect ---- */
+function pz5RenderConnect(){
+  var st = PZ5, m = st.mech;
+  var cols = "<div class='pz5-connect'><div class='pz5-col'>";
+  m.left.forEach(function(it, i){
+    var linked = st.links[i] !== undefined;
+    cols += "<button class='pz5-link" + (st.selL === i ? " held" : "") + (linked ? " ok" : "") + "' data-pz5='left' data-i='" + i + "'>" + esc(it) + "</button>";
+  });
+  cols += "</div><div class='pz5-col'>";
+  m.right.forEach(function(it, i){
+    var used = false; for(var k in st.links) if(st.links[k] === i) used = true;
+    cols += "<button class='pz5-link" + (used ? " ok" : "") + "' data-pz5='right' data-i='" + i + "'>" + esc(it) + "</button>";
+  });
+  cols += "</div></div><div class='pz5-links'>";
+  for(var k in st.links){
+    cols += "<div class='pz5-linkline'>" + esc(m.left[+k]) + " <svg width='40' height='10'><line x1='0' y1='5' x2='40' y2='5'/></svg> " + esc(m.right[st.links[k]]) + "</div>";
+  }
+  cols += "</div>";
+  var noise = "";
+  if(st.noise && st.noise.length){
+    noise = "<div class='pz5-noise-row'>";
+    st.noise.forEach(function(nid){
+      noise += "<button class='pz5-noise' data-pz5='noise' data-i='" + nid + "'>··· signal noise</button>";
+    });
+    noise += "</div>";
+  }
+  return cols + noise;
+}
+function pz5Link(l, r){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  if(st.links[l] !== undefined) return false;
+  st.played = true;
+  var ok = m.pairs.some(function(pr){ return pr[0] === l && pr[1] === r; });
+  if(ok){
+    st.links[l] = r; st.selL = -1;
+    pz5Tone("good"); pz5Say("✓ Link pinned.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  st.selL = -1;
+  pz5Wrong("Those two don't belong together.");
+  return false;
+}
+
+/* ---- memory ---- */
+function pz5RenderMemory(){
+  var st = PZ5;
+  var html = "<div class='pz5-memory'>";
+  st.cards.forEach(function(cd, i){
+    var up = !!st.matched[i] || st.flipped.indexOf(i) >= 0;
+    html += "<button class='pz5-card" + (up ? " up" : "") + (st.matched[i] ? " ok" : "") + "' data-pz5='card' data-i='" + i + "'>" + (up ? esc(cd.text) : "?") + "</button>";
+  });
+  if(st.noise){
+    st.noise.forEach(function(nid){
+      html += "<button class='pz5-card pz5-noise' data-pz5='noise' data-i='" + nid + "'>?</button>";
+    });
+  }
+  html += "</div>";
+  return html;
+}
+function pz5Flip(i){
+  var st = PZ5; if(!st || st.stage !== 2) return false;
+  if(st.matched[i] || st.flipped.indexOf(i) >= 0 || st.flipped.length >= 2) return false;
+  st.played = true;
+  st.seen[i] = true;
+  st.flipped.push(i);
+  pz5Tone("pick");
+  pz5RenderS2();
+  if(st.flipped.length < 2) return true;
+  var a = st.cards[st.flipped[0]], b = st.cards[st.flipped[1]];
+  var isPair = a.li === b.li && a.ri === b.ri && a.side !== b.side;
+  if(isPair){
+    st.matched[st.flipped[0]] = true; st.matched[st.flipped[1]] = true;
+    st.flipped = [];
+    pz5Tone("good"); pz5Say("✓ Pair pinned.", true);
+    pz5AdvanceS2();
+  } else {
+    var fl = st.flipped.slice();
+    st.flipped = [];
+    pz5Wrong("No match — those two don't belong together.");
+    setTimeout(function(){ if(PZ5) pz5RenderS2(); }, 800);
+  }
+  return true;
+}
+/* ---- prints ---- */
+function pz5DrawPrintCanvases(){
+  var st = PZ5; if(!st || st.type !== "prints") return;
+  var ref = pz5El("pz5-refprint");
+  if(ref) pz5DrawPrint(ref, st.mech.answer);
+  var comp = pz5El("pz5-compprint");
+  if(comp && st.examinedIdx !== undefined && st.examinedIdx >= 0) pz5DrawPrint(comp, st.mech.options[st.examinedIdx]);
+  var board = pz5El("pz2d-board");
+  if(board) board.querySelectorAll("[data-printcv]").forEach(function(cv){
+    pz5DrawPrint(cv, st.mech.options[+cv.getAttribute("data-printcv")]);
+  });
+}
+function pz5RenderPrints(){
+  var st = PZ5, m = st.mech;
+  var html = "<div class='pz5-ref'><canvas id='pz5-refprint' width='128' height='128'></canvas><div class='pz5-refcap'>REFERENCE — lifted from the scene</div></div>" +
+    "<div class='pz5-tray'>";
+  m.options.forEach(function(o, i){
+    var ex = !!st.examined[i];
+    html += "<button class='pz5-printcard" + (ex ? " examined" : "") + (st.pinnedPrint === i ? " ok" : "") + "' data-pz5='print' data-i='" + i + "'>" +
+      (ex ? "<canvas class='pz5-printcv' width='96' height='96' data-printcv='" + i + "'></canvas>" : "<div class='pz5-printcover'>⬢ candidate</div>") +
+      "<div>" + esc(o) + "</div></button>";
+  });
+  html += "</div>";
+  if(st.examinedIdx !== undefined && st.examinedIdx >= 0){
+    html += "<div class='pz5-compare'><canvas id='pz5-compprint' width='128' height='128'></canvas>" +
+      "<button class='pz5-pinbtn' data-pz5='pinprint' data-i='" + st.examinedIdx + "'>⬢ PIN THIS PRINT</button></div>";
+  }
+  return html;
+}
+function pz5ExaminePrint(i){
+  var st = PZ5; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  st.examined[i] = true; st.examinedIdx = i;
+  pz5Tone("pick"); pz5Say("Comparing — look at the core pattern, not the edges.", null);
+  pz5RenderS2();
+  var cards = pz5El("pz2d-board").querySelectorAll("[data-printcv]");
+  cards.forEach(function(cv){
+    var idx = +cv.getAttribute("data-printcv");
+    pz5DrawPrint(cv, st.mech.options[idx]);
+  });
+  return true;
+}
+function pz5PinPrint(i){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  if(!st.examined[i]){
+    pz5Say("Examine it under the loupe first — tap the card to compare.", null);
+    return false;
+  }
+  if(m.options[i] === m.answer){
+    st.pinnedPrint = i;
+    pz5Tone("good"); pz5Say("✓ Print pinned — the cores match.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  pz5Wrong("That print doesn't match the reference.");
+  return false;
+}
+/* ---- scale ---- */
+function pz5RenderScale(){
+  var st = PZ5, m = st.mech;
+  var tot = 0; Object.keys(st.loaded).forEach(function(i){ tot += m.items[+i].w; });
+  tot = Math.round(tot * 10) / 10;
+  var tilt = Math.max(-25, Math.min(25, (tot - m.target) * 6));
+  var blocks = "<div class='pz5-tray'>";
+  m.items.forEach(function(it, i){
+    blocks += "<button class='pz5-block" + (st.loaded[i] ? " on" : "") + "' data-pz5='block' data-i='" + i + "'>" + esc(it.label) + " · " + it.w + " " + esc(m.unit || "kg") + "</button>";
+  });
+  blocks += "</div>";
+  var pan = "<div class='pz5-balance'><div class='pz5-beam' style='transform:rotate(" + tilt + "deg)'>⚖ PAN</div>" +
+    "<div class='pz5-pan'>Loaded: " + Object.keys(st.loaded).map(function(i){ return esc(m.items[+i].label); }).join(", ") + "</div>" +
+    "<div class='pz5-readout'>TOTAL " + tot.toFixed(1) + " " + esc(m.unit || "kg") + " · TARGET " + m.target + " " + esc(m.unit || "kg") + "</div>" +
+    "<button class='pz5-pinbtn' data-pz5='pinload'>⬢ PIN LOAD</button></div>";
+  return blocks + pan;
+}
+function pz5LoadBlock(i){
+  var st = PZ5; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  if(st.loaded[i]) delete st.loaded[i]; else st.loaded[i] = true;
+  pz5Tone("pick");
+  pz5RenderS2();
+  return true;
+}
+function pz5PinLoad(){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  var got = Object.keys(st.loaded).map(function(x){ return +x; }).sort(function(a, b){ return a - b; });
+  var want = m.correct.slice().sort(function(a, b){ return a - b; });
+  if(JSON.stringify(got) === JSON.stringify(want)){
+    st.pinnedScale = true;
+    pz5Tone("good"); pz5Say("✓ Load pinned — the manifest matches.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  st.loaded = {};
+  pz5Wrong("That load doesn't match the manifest — the set is wrong. Pan cleared.");
+  return false;
+}
+/* ---- frames ---- */
+function pz5FrameScene(v, answer){
+  if(v === answer) return {cls: "anomaly", label: "⚫ SIGNAL LOST — anomaly frame"};
+  var variants = ["feed", "feed", "feed", "static"];
+  return {cls: variants[(v * 7 + 3) % 4], label: "normal feed"};
+}
+function pz5RenderFrames(){
+  var st = PZ5, m = st.mech;
+  var viewer = "<div class='pz5-viewer" + (st.viewed === m.answer ? " anomaly" : "") + "'>";
+  if(st.viewed === null || st.viewed === undefined){
+    viewer += "<div class='pz5-viewlabel'>Pick a frame from the strip</div>";
+  } else {
+    var sc = pz5FrameScene(st.viewed, m.answer);
+    viewer += "<div class='pz5-viewlabel'>" + fmtSlider(m, st.viewed) + "</div><div class='pz5-framedesc'>" + sc.label + "</div>";
+  }
+  viewer += "</div>";
+  var strip = "<div class='pz5-strip'>";
+  st.frameVals.forEach(function(v){
+    var sc = pz5FrameScene(v, m.answer);
+    strip += "<button class='pz5-frame " + sc.cls + (st.viewed === v ? " sel" : "") + "' data-pz5='frame' data-v='" + v + "'><span>" + fmtSlider(m, v) + "</span></button>";
+  });
+  strip += "</div>";
+  var pin = "";
+  if(st.viewed !== null && st.viewed !== undefined){
+    pin = "<button class='pz5-pinbtn' data-pz5='pinframe' data-v='" + st.viewed + "'>⬢ PIN THIS FRAME</button>";
+  }
+  return viewer + strip + pin;
+}
+function pz5ViewFrame(v){
+  var st = PZ5; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  st.viewed = v;
+  pz5Tone("pick");
+  pz5RenderS2();
+  return true;
+}
+function pz5PinFrame(v){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  st.viewed = v;
+  if(v === m.answer){
+    st.pinnedFrame = v;
+    pz5Tone("good"); pz5Say("✓ Frame pinned — the anomaly is isolated.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  pz5Wrong("That frame isn't the anomaly.");
+  return false;
+}
+/* ---- gauge ---- */
+function pz5RenderGauge(){
+  var st = PZ5, m = st.mech;
+  var pct = (m.max === m.min) ? 0 : Math.round((st.gval - m.min) / (m.max - m.min) * 100);
+  var viz = "<div class='pz5-viz'>";
+  for(var v = m.min; v <= m.max; v += (m.step || 1)){
+    viz += "<span class='pz5-vbox" + (v === st.gval ? " sel" : "") + "'>" + fmtSlider(m, v) + "</span>";
+  }
+  viz += "</div>";
+  return "<div class='pz5-gaugeval'>" + fmtSlider(m, st.gval) + "</div>" +
+    "<div class='pz5-track' data-track='gauge'><div class='pz5-knob' style='left:calc(" + pct + "% - 22px)'></div></div>" +
+    viz + "<button class='pz5-pinbtn' data-pz5='pinlock'>⬢ PIN LOCK</button>";
+}
+function pz5WireGauge(){
+  var board = pz5El("pz2d-board"); if(!board) return;
+  var tr = board.querySelector("[data-track='gauge']");
+  if(!tr) return;
+  var setFromEvent = function(e){
+    var st = PZ5, m = st.mech; if(!st) return;
+    var r = tr.getBoundingClientRect();
+    var p = r.width ? (e.clientX - r.left) / r.width : 0;
+    p = Math.max(0, Math.min(1, p));
+    var raw = m.min + p * (m.max - m.min);
+    var step = m.step || 1;
+    st.gval = Math.round(raw / step) * step;
+    st.gval = Math.max(m.min, Math.min(m.max, st.gval));
+    st.played = true;
+    var knob = tr.querySelector(".pz5-knob");
+    var pct = (m.max === m.min) ? 0 : Math.round((st.gval - m.min) / (m.max - m.min) * 100);
+    if(knob) knob.style.left = "calc(" + pct + "% - 22px)";
+    var gv = board.querySelector(".pz5-gaugeval");
+    if(gv) gv.textContent = fmtSlider(m, st.gval);
+    board.querySelectorAll(".pz5-vbox").forEach(function(bx){
+      bx.classList.toggle("sel", bx.textContent === fmtSlider(m, st.gval));
+    });
+  };
+  tr.addEventListener("pointerdown", function(e){
+    if(tr.setPointerCapture){ try{ tr.setPointerCapture(e.pointerId); }catch(err){} }
+    setFromEvent(e);
+    var mv = function(ev){ setFromEvent(ev); };
+    var up = function(){ if(tr.releasePointerCapture){ try{ tr.releasePointerCapture(e.pointerId); }catch(err){} } tr.removeEventListener("pointermove", mv); tr.removeEventListener("pointerup", up); tr.removeEventListener("pointercancel", up); if(PZ5) pz5RenderS2(); };
+    tr.addEventListener("pointermove", mv);
+    tr.addEventListener("pointerup", up);
+    tr.addEventListener("pointercancel", up);
+  });
+}
+function pz5PinGauge(){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  if(st.gval === m.answer){
+    st.pinnedGauge = true;
+    pz5Tone("good"); pz5Say("✓ Lock pinned on the true value.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  pz5Wrong("The gauge isn't on the true value yet.");
+  return false;
+}
+/* ---- vessels ---- */
+function pz5RenderVessels(){
+  var st = PZ5, m = st.mech;
+  var html = "<div class='pz5-tray'>";
+  m.items.forEach(function(it, i){
+    var t = st.tested[i];
+    html += "<div class='pz5-vessel" + (t !== undefined ? " tested" : "") + "'><div>" + esc(it) + "</div>" +
+      "<div class='pz5-liquid'></div>" +
+      "<div class='pz5-result" + (t === true ? " ok" : t === false ? " bad" : "") + "'>" +
+      (t === true ? "POSITIVE" : t === false ? "NEGATIVE" : "untested") + "</div>" +
+      "<button class='pz5-vbtn' data-pz5='vessel' data-i='" + i + "'>TEST</button>" +
+      (t !== undefined ? "<button class='pz5-pinbtn' data-pz5='pinvessel' data-i='" + i + "'>⬢ PIN</button>" : "") +
+      "</div>";
+  });
+  html += "</div>";
+  return html;
+}
+function pz5TestVessel(i){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  st.tested[i] = (m.items[i] === m.answer);
+  pz5Tone("pick");
+  pz5Say(st.tested[i] ? "POSITIVE reaction on this vessel." : "NEGATIVE — clean.", st.tested[i]);
+  pz5RenderS2();
+  return true;
+}
+function pz5PinVessel(i){
+  var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+  st.played = true;
+  if(st.tested[i] === undefined){
+    pz5Say("Test it first — run the sensor over the vessel.", null);
+    return false;
+  }
+  if(m.items[i] === m.answer){
+    st.pinnedVessel = i;
+    pz5Tone("good"); pz5Say("✓ Vessel pinned — the source is isolated.", true);
+    pz5AdvanceS2();
+    return true;
+  }
+  pz5Wrong("That vessel tested negative — not the source.");
+  return false;
+}
+/* ---- stage advance + verify ---- */
+function pz5AdvanceS2(){
+  var st = PZ5; if(!st) return;
+  if(pz5S2Done(st)){
+    st.stage = 3;
+    pz5Tone("good");
+    pz5Say("✓ Anomaly isolated — lock the finding to verify.", true);
+  }
+  pz5RenderS2();
+}
+function pz5BuildAttempt(st){
+  var m = st.mech;
+  if(st.type === "timeline" || st.type === "cipher") return st.seq.slice();
+  if(st.type === "bins"){
+    var out = [];
+    for(var i = 0; i < m.items.length; i++) out.push(st.placed[i]);
+    return out;
+  }
+  if(st.type === "wheels") return st.wheels.slice();
+  if(st.type === "connect"){
+    var pairs = [];
+    for(var k in st.links) pairs.push([+k, st.links[k]]);
+    return pairs;
+  }
+  if(st.type === "memory"){
+    var seen = {}, pairs = [];
+    for(var i in st.matched){ var cd = st.cards[+i], k2 = cd.li + ":" + cd.ri; if(!seen[k2]){ seen[k2] = true; pairs.push([cd.li, cd.ri]); } }
+    return pairs;
+  }
+  if(st.type === "prints") return m.options[st.pinnedPrint];
+  if(st.type === "scale"){
+    return Object.keys(st.loaded).map(function(x){ return +x; }).sort(function(a, b){ return a - b; });
+  }
+  if(st.type === "frames") return st.pinnedFrame;
+  if(st.type === "gauge") return st.gval;
+  if(st.type === "vessels") return m.items[st.pinnedVessel];
+  return null;
+}
+function pz5Verify(){
+  var st = PZ5; if(!st || st.solved) return false;
+  if(st.stage !== 3 || !pz5S2Done(st)){
+    pz5Say("VERIFY is locked — pin the true anomaly first.", false);
+    return false;
+  }
+  var ok = attemptPuzzle(st.idx, pz5BuildAttempt(st));
+  if(!ok){ pz5Wrong(st.pz.wrong); return false; }
+  st.solved = true;
+  pz5Tone("solve");
+  var pz = st.pz;
+  pz5El("pz2d-board").innerHTML = "<div class='pz5-verified'><div class='pz5-verified-mark'>✓ VERIFIED</div>" +
+    "<p class='pz5-line'>" + esc(pz.done) + "</p>" +
+    (pz.clue ? "<div class='pz5-takeaway'><div class='pz5-takeaway-head'>FORENSIC TAKEAWAY</div><b>" + esc(pz.clue.title) + "</b> — " + esc(pz.clue.text) + "</div>" : "") +
+    "<button class='pz5-continue' data-pz5='continue'>Continue the case →</button></div>";
+  pz5Progress(1, 1, "Verified!");
+  return true;
+}
+
+/* ---------------- board click delegation + drag ---------------- */
+function pz5BoardClick(e){
+  var t = e.target.closest ? e.target.closest("[data-pz5]") : null;
+  if(!t || !PZ5) return;
+  var act = t.getAttribute("data-pz5");
+  var st = PZ5;
+  if(act === "lock"){ pz5Lock(); return; }
+  if(act === "breaker"){
+    var bi = +t.getAttribute("data-i");
+    st.cal.breakers[bi] = !st.cal.breakers[bi];
+    pz5Tone("pick");
+    pz5RenderS1();
+    return;
+  }
+  if(st.stage !== 2 && act !== "verify" && act !== "continue") return;
+  if(act === "verify"){ pz5Verify(); return; }
+  if(act === "continue"){ closePuzzle5(); return; }
+  if(act === "noise"){ pz5Wrong("Signal noise — not evidence."); return; }
+  if(act === "tile"){ pz5PinTile(+t.getAttribute("data-i")); return; }
+  if(act === "item"){
+    st.held = +t.getAttribute("data-i");
+    pz5Tone("pick");
+    pz5RenderS2();
+    return;
+  }
+  if(act === "bucket"){
+    if(st.held < 0){ pz5Say("Pick an item first, then file it.", null); return; }
+    pz5AssignItem(st.held, +t.getAttribute("data-b"));
+    return;
+  }
+  if(act === "wheel-up"){ pz5SetWheel(+t.getAttribute("data-i"), st.wheels[+t.getAttribute("data-i")] + 1); return; }
+  if(act === "wheel-down"){ pz5SetWheel(+t.getAttribute("data-i"), st.wheels[+t.getAttribute("data-i")] - 1); return; }
+  if(act === "pinwheel"){ pz5PinWheel(+t.getAttribute("data-i")); return; }
+  if(act === "left"){
+    st.selL = +t.getAttribute("data-i");
+    pz5Tone("pick");
+    pz5RenderS2();
+    return;
+  }
+  if(act === "right"){
+    if(st.selL < 0){ pz5Say("Pick a left item first, then its match.", null); return; }
+    pz5Link(st.selL, +t.getAttribute("data-i"));
+    return;
+  }
+  if(act === "card"){ pz5Flip(+t.getAttribute("data-i")); return; }
+  if(act === "print"){ pz5ExaminePrint(+t.getAttribute("data-i")); return; }
+  if(act === "pinprint"){ pz5PinPrint(+t.getAttribute("data-i")); return; }
+  if(act === "block"){ pz5LoadBlock(+t.getAttribute("data-i")); return; }
+  if(act === "pinload"){ pz5PinLoad(); return; }
+  if(act === "frame"){ pz5ViewFrame(+t.getAttribute("data-v")); return; }
+  if(act === "pinframe"){ pz5PinFrame(+t.getAttribute("data-v")); return; }
+  if(act === "pinlock"){ pz5PinGauge(); return; }
+  if(act === "vessel"){ pz5TestVessel(+t.getAttribute("data-i")); return; }
+  if(act === "pinvessel"){ pz5PinVessel(+t.getAttribute("data-i")); return; }
+}
+/* ---------------- probe API (test-only surface) ---------------- */
+function pz5NodeList(){
+  var st = PZ5; if(!st || st.stage < 2) return [];
+  var m = st.mech, out = [];
+  if(st.type === "timeline" || st.type === "cipher"){
+    st.tray.forEach(function(tl){
+      out.push({id: "tile:" + tl.i, label: tl.t, pinned: !!st.used[tl.i], noise: false});
+    });
+    (st.noise || []).forEach(function(nid){ out.push({id: "noise:" + nid, label: "signal noise", pinned: false, noise: true}); });
+  } else if(st.type === "bins"){
+    m.items.forEach(function(it, i){ out.push({id: "item:" + i, label: it, pinned: st.placed[i] !== undefined, noise: false}); });
+  } else if(st.type === "wheels"){
+    m.answer.forEach(function(a, i){ out.push({id: "wheel:" + i, label: "wheel " + (i + 1), pinned: !!st.armed[i], noise: false}); });
+  } else if(st.type === "connect"){
+    m.left.forEach(function(it, i){ out.push({id: "left:" + i, label: it, pinned: st.links[i] !== undefined, noise: false}); });
+    (st.noise || []).forEach(function(nid){ out.push({id: "noise:" + nid, label: "signal noise", pinned: false, noise: true}); });
+  } else if(st.type === "memory"){
+    st.cards.forEach(function(cd, i){ out.push({id: "card:" + i, label: cd.text, pinned: !!st.matched[i], noise: false}); });
+    (st.noise || []).forEach(function(nid){ out.push({id: "noise:" + nid, label: "signal noise", pinned: false, noise: true}); });
+  } else if(st.type === "prints"){
+    m.options.forEach(function(o, i){ out.push({id: "print:" + i, label: o, pinned: st.pinnedPrint === i, noise: false}); });
+  } else if(st.type === "scale"){
+    m.items.forEach(function(it, i){ out.push({id: "block:" + i, label: it.label, pinned: !!st.loaded[i], noise: false}); });
+  } else if(st.type === "frames"){
+    st.frameVals.forEach(function(v){ out.push({id: "frame:" + v, label: fmtSlider(m, v), pinned: st.pinnedFrame === v, noise: false}); });
+  } else if(st.type === "gauge"){
+    out.push({id: "lock", label: "lock", pinned: !!st.pinnedGauge, noise: false});
+  } else if(st.type === "vessels"){
+    m.items.forEach(function(it, i){ out.push({id: "vessel:" + i, label: it, pinned: st.pinnedVessel === i, noise: false}); });
+  }
+  return out;
+}
+function pz5Api(){
+  return {
+    stage: function(){ return PZ5 ? PZ5.stage : 0; },
+    calibrated: function(){ return !!(PZ5 && PZ5.calibrated); },
+    s2done: function(){ return pz5S2Done(); },
+    verifyEnabled: function(){ return !!(PZ5 && PZ5.stage === 3 && pz5S2Done()); },
+    solved: function(){ return !!(PZ5 && PZ5.solved); },
+    wrongs: function(){ return PZ5 ? PZ5.wrongs : 0; },
+    cal: function(v){
+      var st = PZ5; if(!st || st.stage !== 1) return false;
+      st.played = true;
+      if(st.inst === "breaker") return false;
+      if(st.inst === "overlay"){ st.cal.offset = Math.max(-1, Math.min(1, v)); }
+      else if(st.inst === "tare"){ st.cal.tare = Math.max(-1, Math.min(1, v)); }
+      else {
+        st.cal.pos = Math.max(0, Math.min(1, v));
+        if(v < st.cal.vmin) st.cal.vmin = v;
+        if(v > st.cal.vmax) st.cal.vmax = v;
+      }
+      pz5TrackRefresh();
+      return true;
+    },
+    sweep: function(){
+      var st = PZ5; if(!st || st.stage !== 1) return false;
+      st.played = true;
+      st.cal.pos = 1; st.cal.vmin = 0; st.cal.vmax = 1;
+      pz5TrackRefresh();
+      return true;
+    },
+    toggleBreaker: function(i){
+      var st = PZ5; if(!st || st.stage !== 1) return false;
+      st.played = true;
+      st.cal.breakers[i] = !st.cal.breakers[i];
+      pz5RenderS1();
+      return true;
+    },
+    lock: function(){ return pz5Lock(); },
+    calTarget: function(){
+      var st = PZ5; if(!st) return null;
+      if(st.inst === "breaker") return {kind: "breakers", n: st.cal.breakers.length};
+      if(st.inst === "overlay") return {kind: "offset", target: 0, tol: pz5Tol()};
+      if(st.inst === "tare") return {kind: "tare", target: 0, tol: pz5Tol()};
+      return {kind: "sweep"};
+    },
+    nodes: function(){ return pz5NodeList(); },
+    pinTile: function(i){ return pz5PinTile(i); },
+    assignItem: function(i, b){ return pz5AssignItem(i, b); },
+    setWheel: function(i, v){ return pz5SetWheel(i, v); },
+    pinWheel: function(i){ return pz5PinWheel(i); },
+    link: function(l, r){ return pz5Link(l, r); },
+    flip: function(i){ return pz5Flip(i); },
+    examine: function(i){ return pz5ExaminePrint(i); },
+    pinPrint: function(i){ return pz5PinPrint(i); },
+    loadBlock: function(i){ return pz5LoadBlock(i); },
+    pinLoad: function(){ return pz5PinLoad(); },
+    viewFrame: function(v){ return pz5ViewFrame(v); },
+    pinFrame: function(v){ return pz5PinFrame(v); },
+    setGauge: function(v){
+      var st = PZ5, m = st.mech; if(!st || st.stage !== 2) return false;
+      var step = m.step || 1;
+      st.gval = Math.max(m.min, Math.min(m.max, Math.round(v / step) * step));
+      st.played = true;
+      pz5RenderS2();
+      return true;
+    },
+    pinGauge: function(){ return pz5PinGauge(); },
+    testVessel: function(i){ return pz5TestVessel(i); },
+    pinVessel: function(i){ return pz5PinVessel(i); },
+    verify: function(){ return pz5Verify(); }
+  };
+}
+function pz5TrackRefresh(){
+  var st = PZ5; if(!st) return;
+  var board = pz5El("pz2d-board"); if(!board) return;
+  var tel = board.querySelector(".pz5-tel"); if(tel) tel.textContent = pz5S1Telemetry();
+  var knob = board.querySelector(".pz5-knob");
+  if(knob){
+    var p = 0;
+    if(st.inst === "overlay") p = (st.cal.offset + 1) / 2;
+    else if(st.inst === "tare") p = (st.cal.tare + 1) / 2;
+    else p = st.cal.pos;
+    knob.style.left = "calc(" + Math.round(p * 100) + "% - 22px)";
+  }
+  var ovl = board.querySelector(".pz5-strip.ovl");
+  if(ovl) ovl.style.transform = "translateX(" + Math.round(st.cal.offset * 120) + "px)";
+  var beam = board.querySelector(".pz5-beam");
+  if(beam) beam.style.transform = "rotate(" + Math.round(st.cal.tare * 25) + "deg)";
+}
+
+/* v5 probe tail: forensic terminal engine + kept dressing/voice helpers. */
 if(window.__LG3D__){
-  window.__LG3D__.openPuzzle3D = openPuzzle3D;
-  window.__LG3D__.closePuzzle3D = closePuzzle3D;
-  window.__LG3D__.pz3d = function(){ return PZ3D; };
-  window.__LG3D__.pzBuilders = {order: buildOrderStation, sort: buildSortStation,
-    dial: buildDialStation, match: buildMatchStation, matchPick: buildMatchPickStation,
-    weigh: buildWeighStation, slider: buildSliderStation, test: buildTestStation};
-  window.__LG3D__.pzGate = pzGate; window.__LG3D__.pzGateMsg = pzGateMsg;
+  window.__LG3D__.openPuzzle5 = openPuzzle5;
+  window.__LG3D__.closePuzzle5 = closePuzzle5;
+  window.__LG3D__.pz5 = function(){ return PZ5; };
   window.__LG3D__.dressRoom = dressRoom; window.__LG3D__.dressTheme = dressTheme;
   window.__LG3D__.pzFlash = pzFlash; window.__LG3D__.evSub = evSub;
 }
