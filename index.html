@@ -55,7 +55,7 @@ video{width:100%;border-radius:12px;background:#000}
 #sheet.collapsed{max-height:64px;overflow:hidden}
 .sheet-collapse{float:right;margin:0 0 8px 8px;min-height:36px;padding:6px 12px}
 #labels6{position:absolute;inset:0;z-index:8;pointer-events:none;overflow:hidden}
-.lbl6{position:absolute;transform:translate(-50%,-50%);background:rgba(10,8,4,.85);border:1px solid #c9a227;color:#f5e9c8;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;pointer-events:none;max-width:70vw;overflow:hidden;text-overflow:ellipsis}
+.lbl6{position:absolute;transform:translate(-50%,-50%);background:rgba(8,6,3,.94);border:1px solid #e0a458;box-shadow:0 1px 6px rgba(0,0,0,.55);color:#f5e9c8;font-size:.8rem;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;pointer-events:none;max-width:70vw;overflow:hidden;text-overflow:ellipsis}
 #sheet.open{transform:translateY(0)}
 .sheet-head{font-size:1.15rem;font-weight:800;margin-bottom:8px}
 .sheet-line{font-size:1.02rem;line-height:1.55}
@@ -766,34 +766,11 @@ var THEMES = {
 
 /* ---------------- 3D scene (Three.js r147 UMD) ---------------- */
 var SCENE = null;
-function makeLabelSprite(text, scale){
-  try{
-    var words = String(text || "").split(/\s+/), lines = [], cur = "";
-    words.forEach(function(wd){ var t = cur ? cur + " " + wd : wd; if(t.length > 26 && cur){ lines.push(cur); cur = wd; } else cur = t; });
-    if(cur) lines.push(cur);
-    lines = lines.slice(0, 2);
-    var cv = document.createElement("canvas");
-    var ctx0 = document.createElement("canvas").getContext("2d");
-    var tw = 0;
-    if(ctx0){ ctx0.font = "bold 40px sans-serif"; lines.forEach(function(ln){ var w = ctx0.measureText(ln).width; if(w > tw) tw = w; }); }
-    var cw = Math.max(120, Math.min(512, Math.ceil(tw) + 48));
-    cv.width = cw; cv.height = lines.length > 1 ? 168 : 112;
-    var ctx = cv.getContext("2d");
-    ctx.fillStyle = "rgba(10,8,4,0.85)";
-    var bh = lines.length > 1 ? 140 : 84;
-    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(6, 14, cw - 12, bh, 26); ctx.fill(); }
-    else { ctx.fillRect(6, 14, cw - 12, bh); }
-    ctx.strokeStyle = "#c9a227"; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = "#f5e9c8"; ctx.font = "bold 40px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    lines.forEach(function(ln, i){ ctx.fillText(ln, cw / 2, lines.length > 1 ? 52 + i * 48 : 58); });
-    var tex = new THREE.CanvasTexture(cv);
-    var mat = new THREE.SpriteMaterial({map: tex, transparent: true, depthTest: true});
-    var sp = new THREE.Sprite(mat);
-    var hh = lines.length > 1 ? 0.86 : 0.57;
-    sp.scale.set(2.6*(scale||1)*(cw / 512), hh*(scale||1), 1);
-    return sp;
-  }catch(e){ return null; }
-}
+/* v12: the legacy in-scene sprite text painter that used to live here is
+   REMOVED. It had no call sites left — every scene label is a DOM pill in
+   #labels6 placed by placeLabel11 — and keeping a second, divergent text
+   path in the file invited exactly the style/position split the v11
+   inspection chased. One label mechanism only: DOM .lbl6 pills. */
 function mat(color, emissive){
   return new THREE.MeshStandardMaterial({color: color, roughness: 0.8, metalness: 0.1,
     emissive: emissive||0x000000, emissiveIntensity: emissive?0.55:0});
@@ -944,6 +921,60 @@ function paintFace9(ctx, w, h, skin, hair, style){
     ctx.arc(256, 402, 62, 0.2, Math.PI - 0.2); ctx.stroke();
     ctx.fillStyle = "rgba(140,70,60,0.55)";
     ctx.beginPath(); ctx.ellipse(256, 424, 58, 13, 0, 0, 7); ctx.fill();
+  ctx.restore();
+}
+/* ============ v11 POLISH ROUND ============
+   ITEM 3 — the torso clothing painter. Draws a garment FRONT in the
+   suspect's own outfit colour, synchronously (same discipline as
+   paintFace9): base colour, side shading, shirt + collar V, a tie
+   (suit/coat) or a badge (uniform), a buttons line, a chest pocket and
+   a belt with buckle. Every suspect keeps their distinct outfit colour
+   because the base IS out.top. The texture is applied to the torso box
+   only; arms/shoulders/skirt keep the plain outfit material. */
+function paintTorso11(ctx, w, h, out){
+  var base = "#" + ("000000" + (out.top >>> 0).toString(16)).slice(-6);
+  var style = out.style || "suit";
+  ctx.save();
+  if(w !== 256 || h !== 256) ctx.scale(w / 256, h / 256);
+  // 1) base garment colour
+  ctx.fillStyle = base; ctx.fillRect(0, 0, 256, 256);
+  // 2) side shading + centre light (garment folds, not one flat tone)
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(0, 0, 26, 256); ctx.fillRect(230, 0, 26, 256);
+  ctx.fillStyle = "rgba(255,255,255,0.07)";
+  ctx.fillRect(108, 0, 40, 256);
+  // 3) shirt + collar V (dress: neckline band instead)
+  var shirt = "#e8e2d4";
+  if(style !== "dress"){
+    ctx.fillStyle = shirt;
+    ctx.beginPath(); ctx.moveTo(84, 0); ctx.lineTo(128, 92); ctx.lineTo(128, 0); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(172, 0); ctx.lineTo(128, 92); ctx.lineTo(128, 0); ctx.closePath(); ctx.fill();
+    ctx.fillRect(119, 0, 18, 150);
+    ctx.fillStyle = base;
+    ctx.beginPath(); ctx.moveTo(84, 0); ctx.lineTo(128, 92); ctx.lineTo(112, 92); ctx.lineTo(76, 0); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(172, 0); ctx.lineTo(128, 92); ctx.lineTo(144, 92); ctx.lineTo(180, 0); ctx.closePath(); ctx.fill();
+  } else {
+    ctx.fillStyle = shirt;
+    ctx.fillRect(84, 0, 88, 16);
+    ctx.beginPath(); ctx.ellipse(128, 10, 44, 14, 0, 0, 7); ctx.fill();
+  }
+  // 4) tie (suit/coat) or chest badge (uniform)
+  if(style === "suit" || style === "coat"){
+    ctx.fillStyle = "#c9a227";
+    ctx.fillRect(121, 26, 14, 92);
+    ctx.beginPath(); ctx.moveTo(121, 118); ctx.lineTo(135, 118); ctx.lineTo(128, 140); ctx.closePath(); ctx.fill();
+  } else if(style === "uniform"){
+    ctx.fillStyle = "#c9a227"; ctx.fillRect(168, 66, 34, 12);
+  }
+  // 5) buttons down the front
+  ctx.fillStyle = "rgba(18,14,10,0.92)";
+  for(var bi = 0; bi < 4; bi++) ctx.fillRect(124, 128 + bi * 26, 8, 8);
+  // 6) chest pocket + flap highlight
+  ctx.fillStyle = "rgba(0,0,0,0.22)"; ctx.fillRect(170, 118, 44, 34);
+  ctx.fillStyle = "rgba(255,255,255,0.13)"; ctx.fillRect(170, 118, 44, 7);
+  // 7) belt + buckle
+  ctx.fillStyle = "rgba(12,10,8,0.88)"; ctx.fillRect(0, 224, 256, 32);
+  ctx.fillStyle = "#c9a227"; ctx.fillRect(112, 231, 32, 18);
   ctx.restore();
 }
 function faceTex(skin, hair, style){
@@ -1318,6 +1349,11 @@ function suspectFigure(sp, idx, caseId){
   var g = new THREE.Group();
   var skinM = new THREE.MeshStandardMaterial({color: new THREE.Color(skin), roughness: 0.7});
   var topM = new THREE.MeshStandardMaterial({color: out.top, roughness: 0.85});
+  // v11: the torso wears the PAINTED clothing texture (paintTorso11) so
+  // it stops reading as a flat coloured box; arms/shoulders/skirt keep
+  // the plain outfit material above.
+  var torsoTex11 = cvTex(256, 256, function(ctxT, wT, hT){ paintTorso11(ctxT, wT, hT, out); });
+  var torsoM11 = new THREE.MeshStandardMaterial({map: torsoTex11, roughness: 0.85});
   var pantsM = new THREE.MeshStandardMaterial({color: out.pants, roughness: 0.9});
   var hairM = new THREE.MeshStandardMaterial({color: new THREE.Color(hair), roughness: 0.95});
   // legs (proper proportions: 0.78m)
@@ -1326,7 +1362,7 @@ function suspectFigure(sp, idx, caseId){
   g.add(b2(0.2, 0.07, 0.3, texMat("metalDark"), -0.11, 0.035, 0.05));
   g.add(b2(0.2, 0.07, 0.3, texMat("metalDark"), 0.11, 0.035, 0.05));
   // torso (0.62m) + shoulders + arms
-  var torso = b2(0.56, 0.62, 0.28, topM, 0, 1.09, 0); torso.name = "torso10"; g.add(torso);
+  var torso = b2(0.56, 0.62, 0.28, torsoM11, 0, 1.09, 0); torso.name = "torso10"; g.add(torso);
   var shoulder9 = c2(0.085, 0.085, 0.6, topM, 0, 1.37, 0, 10); shoulder9.rotation.z = Math.PI / 2; g.add(shoulder9);
   if(out.style === "suit" || out.style === "coat"){
     g.add(b2(0.1, 0.3, 0.02, new THREE.MeshStandardMaterial({color: 0xc9a227, roughness: 0.5}), 0, 1.2, 0.13));
@@ -1549,6 +1585,36 @@ function placeLabel10(px, py, w, h, rect){
   if(h + 2 * M >= rect.height) cy = (T + B) / 2;
   else cy = Math.max(T + h / 2 + M, Math.min(B - h / 2 - M, py));
   return {hidden: false, x: cx, y: cy};
+}
+/* v11 — edge-zone placement (the LAST label fix). placeLabel10 keeps a
+   box inside the canvas, but a label whose ANCHOR projects at the very
+   edge still renders flush against the border, half over whatever busy
+   foreground object stands there — the live "Gallery Floor Plan" label
+   in the Storage Room starting view (v10 inspection, the one FAIL).
+   placeLabel11 = placeLabel10 + an edge-zone rule:
+     - anchor outside the canvas rect -> hidden (unchanged);
+     - anchor within the outer 12% of the canvas width (either side), OR
+       the clamped box would have to shift more than 40px away from the
+       anchor to fit -> the box is placed at a FIXED inset: its
+       anchor-side edge sits 16px inside the canvas edge, vertically at
+       the anchor's clamped Y. The label is fully inside with clear
+       space around it, never flush;
+     - otherwise the placeLabel10 result is returned untouched (so the
+       v10 regression behaviour for mid-view labels is preserved). */
+function placeLabel11(px, py, w, h, rect){
+  var L = rect.left, T = rect.top, R = rect.left + rect.width, B = rect.top + rect.height;
+  if(px < L || px > R || py < T || py > B) return {hidden: true};
+  var base = placeLabel10(px, py, w, h, rect);
+  if(base.hidden) return base;
+  var zone = rect.width * 0.12;
+  var edgeL = (px - L) < zone, edgeR = (R - px) < zone;
+  var shift = Math.abs(base.x - px);
+  if(!edgeL && !edgeR && shift <= 40) return base;
+  var M = 16, cx;
+  if(w + 2 * M >= rect.width) cx = (L + R) / 2;
+  else if(edgeL || (!edgeR && px < (L + R) / 2)) cx = L + M + w / 2;
+  else cx = R - M - w / 2;
+  return {hidden: false, x: cx, y: base.y};
 }
 var MOODLIGHT = {
   night: {amb: 0.95, dir: 1.0, dirCol: 0x9ab8ff, fog: 0x0a0d18, bg: 0x0a0d18},
@@ -2630,17 +2696,27 @@ function initScene(){
         var w = el2.offsetWidth || Math.min(LW9 - 16, Math.max(48, (it.label || "").length * 8.5 + 28));
         var h = el2.offsetHeight || 26;
         el2.style.visibility = "";
-        var pl10 = placeLabel10(x + lox9, y + loy9, w, h, canvasRect10);
-        if(pl10.hidden){ el2.style.display = "none"; return; }
-        el2._box10 = {x: pl10.x, y: pl10.y, w: w, h: h};
-        cand.push({x: pl10.x, y: pl10.y, w: w, h: h, d: d, el: el2});
+        // v11: edge-zone aware placement (placeLabel11); the placed box
+        // is recorded on _box11 and mirrored to _box10 (its margins are
+        // >= the v10 ones, so the v10 placement contract still holds).
+        var pl11 = placeLabel11(x + lox9, y + loy9, w, h, canvasRect10);
+        if(pl11.hidden){ el2.style.display = "none"; return; }
+        el2._box11 = {x: pl11.x, y: pl11.y, w: w, h: h};
+        el2._box10 = el2._box11;
+        cand.push({x: pl11.x, y: pl11.y, w: w, h: h, d: d, el: el2});
       });
       var kept = suppressLabels8(cand);
       cand.forEach(function(cd, ci){
         if(!kept[ci]){ cd.el.style.display = "none"; return; }
         cd.el.style.display = "block";
         cd.el.style.left = cd.x + "px"; cd.el.style.top = cd.y + "px";
-        cd.el.style.opacity = Math.max(0.3, Math.min(1, (5.5 - cd.d) / 3));
+        // v12: the distance fade floor is 0.92, not 0.3. At 0.3 the
+        // pill's dark bg and amber border both washed out over bright
+        // dressing — the live "thin dark oval, shelf lines showing
+        // through, no border" (GFP sits 5.44 m from the Storage
+        // viewpoint -> it rendered at 0.30, while Marcus Hale at
+        // 3.04 m / 0.82 read as a solid pill in the same room).
+        cd.el.style.opacity = Math.max(0.92, Math.min(1, (5.5 - cd.d) / 3));
         cd.el.style.transform = "translate(-50%,-50%)";
       });
     }
@@ -2874,6 +2950,13 @@ function initScene(){
         var a = g.userData.anim;
         g.position.y = Math.sin(clock * 1.6 + a.phase) * 0.035;
         a.head.rotation.z = Math.sin(clock * 0.9 + a.phase) * 0.05;
+        // v11 idle11: a DEFINITE head yaw (+-0.21 rad, ~12 deg, ~5s
+        // period) plus a small breathing bob of the head group. v10
+        // restored userData.anim but the amplitudes were too small to
+        // confirm in stills a minute apart; this is gentle but
+        // unmissable over a few seconds of looking at a suspect.
+        a.head.rotation.y = Math.sin(clock * 1.2566 + a.phase) * 0.21;
+        a.head.position.y = 1.60 + Math.sin(clock * 1.6 + a.phase) * 0.012;
         a.armL.rotation.x = Math.sin(clock * 1.3 + a.phase) * 0.08;
         a.armR.rotation.x = Math.sin(clock * 1.3 + a.phase + 1.2) * 0.08;
         var dxp = PL.x - g.position.x, dzp = PL.z - g.position.z;
@@ -2928,7 +3011,7 @@ function initScene(){
       },
       endInspect: function(){ inspecting = null; applyCam(); },
       isInspecting: function(){ return !!inspecting; },
-      updateLabels: updateLabels, clearLabels: clearLabels8, clampLabelBox: clampLabelBox8, suppressLabels: suppressLabels8, ceilingMat: ceilMat8, placeLabel: placeLabel9, placeLabelCanvas: placeLabel10,
+      updateLabels: updateLabels, clearLabels: clearLabels8, clampLabelBox: clampLabelBox8, suppressLabels: suppressLabels8, ceilingMat: ceilMat8, placeLabel: placeLabel9, placeLabelCanvas: placeLabel10, placeLabelEdge: placeLabel11,
       evMeshes: evMeshes, suspMeshes: suspMeshes, puzzMeshes: puzzMeshes, searchMeshes: searchMeshes,
       twistMeshes: twistMeshes, stopped: false, animate: animate, fpInteract: fpInteract,
       interactables: interactables, colliders: colliders, rooms: rooms, dist: dist,
@@ -5312,6 +5395,12 @@ if(!window.__LG7_BOUND__){
       } else if(cev){
         LG7.boardFeedback = "<span class='fb-bad'>Not examined yet \u2014 find and examine \u201C" + esc(cev.label) + "\u201D in the Scene first, then link it here.</span>";
       }
+      // v12: also surface the same message as a toast. The feedback
+      // line renders below the chip grid, so on a phone it can land
+      // below the fold and read as "nothing happened" (the v11 live
+      // miss — the handler and the DOM write were both verified fine).
+      // toast() is fixed-position and always on top: unmissable.
+      if(cev){ try{ toast(LG7.boardFeedback.replace(/<[^>]+>/g, "")); }catch(e){} }
       renderBoard7();
     }
     else if(act === "brief-play"){ playBrief7(); }
