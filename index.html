@@ -980,6 +980,40 @@ function paintTorso11(ctx, w, h, out){
 function faceTex(skin, hair, style){
   return cvTex(512, 512, function(ctx, w, h){ paintFace9(ctx, w, h, skin, hair, style); });
 }
+/* ============ v14 ITEM 1 — tab / talk portraits for ALL cases ============
+   v13 gap (live inspection, Case 23): the Suspects tab showed photo
+   portraits only for cases 1-12 (TEX3D.portraits has no entries past
+   case 12); Hard/God suspects fell back to a generic silhouette icon,
+   and the talk sheet hard-coded the icon for everyone — even though
+   every in-scene figure already wears a painted face. portraitFor14
+   returns the TEX3D photo when one exists (cases 1-12, unchanged);
+   otherwise it paints the portrait with the SAME paintFace9 call
+   suspectFigure() makes — identical skin / hair / hairStyle derived
+   from (idx, caseId), idx being the suspect's index in c.susp (the
+   scene spawner passes exactly that index to suspectFigure) — so the
+   tab face IS the in-scene face. Cached per caseId:key; returns null
+   only if painting itself fails (callers keep the icon last-resort). */
+var PORTRAIT14 = {};
+function portraitFor14(caseId, sp, idx){
+  var key14 = (caseId || 1) + ":" + ((sp && sp.key) || "");
+  if(Object.prototype.hasOwnProperty.call(PORTRAIT14, key14)) return PORTRAIT14[key14];
+  var uri14 = null;
+  try{ uri14 = (typeof TEX3D !== "undefined" && TEX3D.portraits) ? TEX3D.portraits[key14] : null; }catch(e){}
+  if(uri14){ PORTRAIT14[key14] = uri14; return uri14; }
+  var out14 = null;
+  try{
+    var i14 = idx || 0;
+    var skin14 = SKINS[(i14 + (caseId || 1)) % SKINS.length];
+    var hair14 = HAIRS[(i14 * 2 + (caseId || 1)) % HAIRS.length];
+    var hs14 = ["short", "long", "bald", "short"][(i14 + (caseId || 1)) % 4];
+    var cv14 = document.createElement("canvas"); cv14.width = 256; cv14.height = 256;
+    paintFace9(cv14.getContext("2d"), 256, 256, skin14, hair14, hs14);
+    out14 = cv14.toDataURL("image/png");
+    if(typeof out14 !== "string" || out14.indexOf("data:") !== 0) out14 = null;
+  }catch(e){ out14 = null; }
+  PORTRAIT14[key14] = out14;
+  return out14;
+}
 var TEXCACHE = {};
 function texMat(kind, tint){
   var key = kind + ":" + (tint || "");
@@ -3140,7 +3174,11 @@ function interrogate(key){
   var qa = sp.qa.map(function(q, i){
     return "<button class='btn ghost qbtn' data-act='ask' data-key='" + esc(key) + "' data-qi='" + i + "'>“" + esc(q.q) + "”</button>";
   }).join("");
-  openSheet("<div class='sheet-head'>👤 " + esc(sp.name) + " <small>· " + esc(sp.role) + "</small></div>" +
+  var sidx14 = 0; c.susp.forEach(function(x14, xi14){ if(x14.key === key) sidx14 = xi14; });
+  var port14 = null;
+  try{ port14 = portraitFor14(c.id, sp, sidx14); }catch(e){}
+  var head14 = port14 ? "<img class='susp-port' src='" + esc(port14) + "' alt=''/>" : "\uD83D\uDC64 ";
+  openSheet("<div class='sheet-head'>" + head14 + esc(sp.name) + " <small>· " + esc(sp.role) + "</small></div>" +
     "<p class='sheet-line'>“" + esc(sp.intro) + "”</p>" +
     "<div class='sheet-sub'>Tap a question — keep it short, then compare notes with your team.</div>" +
     qa + "<div id='ask-out'></div>" +
@@ -5007,12 +5045,16 @@ function renderEvidence7(){
 function renderSuspects7(){
   var el = $("susp-list"); if(!el) return;
   var c = C(); if(!c) return;
-  el.innerHTML = c.susp.map(function(sp){
+  el.innerHTML = c.susp.map(function(sp, si14){
     var topics = sp.qa.map(function(q, i){
       return "<button class='btn ghost qbtn' data-act='ask' data-key='" + esc(sp.key) + "' data-qi='" + i + "'>\u201C" + esc(q.q) + "\u201D</button>";
     }).join("");
+    /* v14 ITEM 1: portraitFor14 — the TEX3D photo for cases 1-12, a
+       paintFace9-painted face (same skin/hair/style derivation as the
+       in-scene figure) for every other case. The icon remains only as
+       a last resort if painting itself fails. */
     var port8 = null;
-    try{ port8 = (typeof TEX3D !== "undefined" && TEX3D.portraits) ? TEX3D.portraits[c.id + ":" + sp.key] : null; }catch(e){}
+    try{ port8 = portraitFor14(c.id, sp, si14); }catch(e){}
     var head8 = port8 ? "<img class='susp-port' src='" + esc(port8) + "' alt=''/>" : "<span class='susp-port-ico'>👤</span>";
     return "<div class='goal'>" + head8 + "<b>" + esc(sp.name) + "</b> <small>· " + esc(sp.role) + "</small>" +
       "<p class='sheet-line'>\u201C" + esc(sp.intro) + "\u201D</p>" +
@@ -5098,6 +5140,7 @@ function nextChapter7(){
   }
   if(LG7.chapter >= 3) return "done";
   LG7.chapter++; LG7.hintsUsed = 0; LG7.report = null; LG7.slotA = null; LG7.slotB = null;
+  LG7.boardFeedback = ""; /* v14 ITEM 2: feedback never crosses a chapter change */
   brief7(); renderAll7(); return true;
 }
 
@@ -5201,7 +5244,13 @@ examine = function(evId){
     openSheet("<div class='sheet-head'>🔒 Sealed clue</div><p class='sheet-line'>Only the " + esc(ROLE7[role]) + " can examine this one \u2014 ask them to share it on the Board.</p><button class='btn' data-act='sheet-close'>Close</button>");
     return false;
   }
-  examine0(evId); return true;
+  examine0(evId);
+  /* v14 ITEM 2: a successful examine invalidates earlier board
+     feedback (e.g. a "Not examined yet" line naming the very item just
+     examined). Clear it and re-render the board so the line can never
+     outlive the state it described. */
+  if(LG7.boardFeedback){ LG7.boardFeedback = ""; renderBoard7(); }
+  return true;
 };
 var doHint0 = doHint;
 doHint = function(){
@@ -5259,12 +5308,16 @@ var submitSolve0 = submitSolve;
 submitSolve = function(){
   submitSolve0();
   if(!S.solved) return;
+  /* v14 ITEM 2: the case is closed — investigation feedback must not
+     outlive the verdict. */
+  LG7.boardFeedback = "";
   var c = C(); if(!c) return;
   LG7.epilogue = "Case " + (S.caseId < 10 ? "0" : "") + S.caseId + " · " + c.title + " \u2014 " +
     (c.answerText ? (c.answerText.who + " " + c.answerText.how + " " + c.answerText.where) : "") +
     " " + (c.solveLines ? c.solveLines.closed : "");
   var ep = $("board-epilogue");
   if(ep) ep.innerHTML = "<div class='goal ok'><b>Epilogue</b><p class='sheet-line'>" + esc(LG7.epilogue) + "</p></div>";
+  var fbc14 = $("board-feedback"); if(fbc14) fbc14.innerHTML = ""; /* v14 ITEM 2 */
 };
 var wireConn0 = wireConn;
 wireConn = function(conn){
@@ -5405,7 +5458,7 @@ if(!window.__LG7_BOUND__){
     }
     else if(act === "brief-play"){ playBrief7(); }
     else if(act === "board-link"){ link7(LG7.slotA, LG7.slotB); }
-    else if(act === "board-clear"){ LG7.slotA = null; LG7.slotB = null; renderBoard7(); }
+    else if(act === "board-clear"){ LG7.slotA = null; LG7.slotB = null; LG7.boardFeedback = ""; renderBoard7(); }
     else if(act === "board-next"){ nextChapter7(); }
     else if(act === "board-accuse"){ startSolve(); }
     else if(act === "chat-send"){
