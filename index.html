@@ -16,6 +16,7 @@ h3{font-size:1.05rem;margin:14px 0 6px}
 p{line-height:1.5}
 .lede{color:var(--dim)}
 .tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:20px;border:1px solid var(--line);margin-bottom:6px}
+.tag.closed15{border-color:var(--ok);color:var(--ok)}
 .tag.normal{background:#14301c;color:#bfe8c8}
 .tag.hard{background:#3a1212;color:#ffcfcf}
 .tag.god{background:#2a1a3a;color:#e0ccff}
@@ -1389,7 +1390,51 @@ function suspectFigure(sp, idx, caseId){
   var torsoTex11 = cvTex(256, 256, function(ctxT, wT, hT){ paintTorso11(ctxT, wT, hT, out); });
   var torsoM11 = new THREE.MeshStandardMaterial({map: torsoTex11, roughness: 0.85});
   var pantsM = new THREE.MeshStandardMaterial({color: out.pants, roughness: 0.9});
-  var hairM = new THREE.MeshStandardMaterial({color: new THREE.Color(hair), roughness: 0.95});
+  /* ============ v15 ITEM 1 — hair: ONE derivation, rendered faithfully ==
+     The canvas portrait and this material are fed the SAME hair value
+     (HAIRS[(idx * 2 + caseId) % HAIRS.length], above) — they diverged
+     only in rendering: the canvas shows the sRGB hex raw, while the
+     r147 legacy pipeline treats the material hex as linear albedo
+     under a ~2-2.5x summed light rig + ACES 1.3, blowing mid-tones
+     (HAIRS[3] #6a6a6a — Case 23 Vinter AND Case 13 Bram Quill) out to
+     near-white. For suspects WITHOUT a photo (the painted face is the
+     reference), decode the material colour sRGB->linear — the same
+     decode the sRGB face texture already gets — so the lit hair lands
+     on the portrait's tone. Photo cases keep the raw colour exactly
+     as before (live-verified against the photos). */
+  var hairCol15 = new THREE.Color(hair);
+  var hasPhoto15 = false;
+  try{ hasPhoto15 = !!((typeof TEX3D !== "undefined" && TEX3D.portraits) ? TEX3D.portraits[caseId + ":" + (sp.key || "")] : null); }catch(e){}
+  if(!hasPhoto15){
+    /* v16 RECALIBRATION (diagnostic round — see rebuild-v16/dump16.js
+       and dump_v15.txt): the enumeration through the real entry path
+       proves hair10 / hair-back10 ARE the visible cap and DID carry
+       v15's decoded colour (0.144 for #6a6a6a) — yet the cap renders
+       light grey, because the fault sits one leg further down the
+       pipeline than v15 modelled. The portrait is a 2D canvas: it
+       DISPLAYS the raw sRGB hex (0.416). This renderer sets ACES
+       exposure 1.3 and NO sRGB output encoding, and the rig sums
+       ~2.9x irradiance on the cap's front-crown normal (ambient
+       0.95 + hemi ~0.55 + dir ~0.65 + camera fill ~0.55 + room
+       point ~0.3, read off the spawned scene), so the decoded
+       albedo displays at ACES(0.144 * 2.9 * 1.3) ~ 0.66. Compensate
+       through the WHOLE pipeline: albedo = ACESinv(sRGB) / (K16 *
+       1.3) per channel, ACESinv the closed-form inverse of three
+       r147's ACES fit, K16 = 2.9 the nominal summed irradiance.
+       The reference view lands on the portrait's tone; shading
+       still varies with orientation, as it should. */
+    var K16 = 2.9 * 1.3;
+    var invAces16 = function(s){
+      s = Math.max(0, Math.min(0.98, s));
+      var A16 = 2.51 - 2.43 * s, B16 = 0.03 - 0.59 * s, C16 = -0.14 * s;
+      return (-B16 + Math.sqrt(Math.max(0, B16 * B16 - 4 * A16 * C16))) / (2 * A16);
+    };
+    hairCol15 = new THREE.Color(
+      invAces16(hairCol15.r) / K16,
+      invAces16(hairCol15.g) / K16,
+      invAces16(hairCol15.b) / K16);
+  }
+  var hairM = new THREE.MeshStandardMaterial({color: hairCol15, roughness: 0.95});
   // legs (proper proportions: 0.78m)
   var legL = c2(0.075, 0.06, 0.78, pantsM, -0.11, 0.39, 0, 10); g.add(legL);
   var legR = c2(0.075, 0.06, 0.78, pantsM, 0.11, 0.39, 0, 10); g.add(legR);
@@ -3440,17 +3485,50 @@ function buildHome(){
     setTimeout(function(){ openBrief(inv.caseId); }, 300);
   }
 }
+/* ============ v15 ITEM 2 — completed-case record + card badge ============
+   The pre-v15 stored signal for a finished case, named: the
+   single-slot save's lg8.epilogue — set only by the verdict path and
+   saved under save.caseId. The score (S.verdict.score) was never
+   persisted, and the slot is overwritten by the next case entered,
+   so a closure left no durable trace (and renderCards never looked).
+   markClosed15 writes a durable per-case record (lg15-closed) at
+   verdict time; renderCards badges recorded cases; a case whose
+   CURRENT slot save still carries a non-empty lg8.epilogue (a
+   pre-v15 closure) is badged too, without a score. Display-only. */
+function closedMap15(){
+  try{ var m15 = JSON.parse(localStorage.getItem("lg15-closed") || "{}"); return (m15 && typeof m15 === "object") ? m15 : {}; }catch(e){ return {}; }
+}
+function markClosed15(caseId, score){
+  try{
+    var m15 = closedMap15();
+    m15[caseId] = {score: (typeof score === "number" ? score : null), ts: Date.now()};
+    localStorage.setItem("lg15-closed", JSON.stringify(m15));
+  }catch(e){}
+}
+function legacyClosed15(caseId){
+  var sv15 = loadSave();
+  return !!(sv15 && sv15.caseId === caseId && sv15.lg8 && typeof sv15.lg8.epilogue === "string" && sv15.lg8.epilogue.length > 0);
+}
+var CARDSMODE16 = "normal"; /* v16 ITEM 2: mode the cards were last rendered in */
 function renderCards(mode){
   var wrap = $("casecards"); if(!wrap) return;
+  CARDSMODE16 = mode;
+  var cmap15 = closedMap15(); /* v15 ITEM 2 */
   var html = "";
   Object.keys(CASES).sort(function(a,b){ return a-b; }).forEach(function(k){
     var c = CASES[k];
     if(c.tier !== mode) return;
     var minNote = c.minEv ? (" · Min " + c.minEv + " evidence to solve") : "";
+    /* v15 ITEM 2: closed badge — durable record first (with score),
+       then the legacy single-slot epilogue signal (no score stored). */
+    var rec15 = cmap15[c.id];
+    var badge15 = "";
+    if(rec15) badge15 = "<span class='tag closed15'>\u2713 Case Closed" + (typeof rec15.score === "number" ? " · " + rec15.score + "/3" : "") + "</span> ";
+    else if(legacyClosed15(c.id)) badge15 = "<span class='tag closed15'>\u2713 Case Closed</span> ";
     html += "<div class='casecard'><span class='tag " + c.tier + "'>" +
       (c.tier==="normal" ? "📗 NORMAL" : c.tier==="hard" ? "🔴 HARD" : "👑 GOD") + " · Case " + (c.id < 10 ? "0" : "") + c.id + "</span>" +
       "<h3>" + esc(c.title) + "</h3><p>" + esc(c.brief) + "</p>" +
-      "<p class='meta'>12 evidence · 4 suspects · " + c.puzzles.length + " puzzles" + minNote + "</p>" +
+      "<p class='meta'>12 evidence · 4 suspects · " + c.puzzles.length + " puzzles" + minNote + "</p>" + badge15 +
       "<button class='btn' data-act='card-enter' data-id='" + c.id + "'>Enter this case →</button></div>";
   });
   wrap.innerHTML = html;
@@ -3563,6 +3641,13 @@ function leaveCase(){
   if(S.timer){ clearInterval(S.timer); S.timer = null; }
   stopScene(); liveStop(); closeSheet();
   S.entered = false; S.solveMode = false;
+  /* v16 ITEM 2: re-render the case cards on EVERY return home. The
+     verdict writes the durable lg15-closed record, and renderCards
+     badges from it — but cards were rendered at boot and only
+     re-rendered on mode-tab clicks, so a case closed this session
+     showed no badge until a tab tap or a reload (proven organically
+     on v15: full DOM playthrough, record written, card stale). */
+  try{ renderCards(CARDSMODE16 || "normal"); }catch(e){}
   showView("view-home");
 }
 
@@ -5318,6 +5403,11 @@ submitSolve = function(){
   var ep = $("board-epilogue");
   if(ep) ep.innerHTML = "<div class='goal ok'><b>Epilogue</b><p class='sheet-line'>" + esc(LG7.epilogue) + "</p></div>";
   var fbc14 = $("board-feedback"); if(fbc14) fbc14.innerHTML = ""; /* v14 ITEM 2 */
+  /* v15 ITEM 2: record the closure durably, per case, while the
+     verdict (and its score) is still in memory — the single-slot save
+     cannot hold it (overwritten by the next case) and never stored
+     the score at all. Display-only: re-entering is unchanged. */
+  try{ markClosed15(S.caseId, S.verdict ? S.verdict.score : null); }catch(e){}
 };
 var wireConn0 = wireConn;
 wireConn = function(conn){
